@@ -16,5 +16,19 @@ config/folders.txt
 *.war
 *.ear
 
+# Intellij files
+.classpath
+.project
+.settings/
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Auto generated files
+src/main/resources/static/css/labels.css
+config/labels.txt
+config/folders.txt
+
+# Data folder
+data/
+!data/example-*

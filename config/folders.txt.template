@@ -1,0 +1,3 @@
+# Specify names and locations of datasets, also type (conll or ta)
+English   data/example-eng-tas/	ta
+EnglishConll   data/example-eng-conll/	conll
