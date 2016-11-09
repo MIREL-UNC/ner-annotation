@@ -1,70 +1,75 @@
 <!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
 <html xmlns:th="http://www.thymeleaf.org">
-<head> 
-    <title>Annotation</title>
+<head>
+  <title>Annotation</title>
 
-    <div th:include="base :: head"></div>
+  <div th:include="base :: head"></div>
 
 </head>
 <body>
 <div th:include="base :: nav"></div>
-  <div class="container">
+<div class="container">
 
-      <div class="page-header">
-          <h1>Annotation <small th:text="${taid}"></small></h1>
-      </div>
+  <div class="page-header">
+    <h1>Annotation
+      <small th:text="${taid}"></small>
+    </h1>
+  </div>
 
-      <div id="tagdescriptions">
-          Labels:
-              <span th:each="label : ${labels}" th:class="${label}" th:text="${label}"></span>
-
-      </div>
-
-      <div class="form-group">
-          <a id="savebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span> Save</a>
-          <a id="removebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Remove All Labels</a>
-      </div>
-
-      <div class="panel panel-default">
-              <div class="panel-body" >
-                  <div th:utext="${htmlstring}" id="text" />
-              </div>
-          </div>
-
-
-      <div class="form-group">
-          <div class="btn-group" role="group" aria-label="Next and previous">
-              <a th:if="${previd} != -1" th:href="@{/annotation(taid=${previd})}" href="#" class="btn btn-default saveclass" role="button"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span> Previous</a>
-              <a th:if="${nextid} != -1" th:href="@{/annotation(taid=${nextid})}" href="#" class="btn btn-default saveclass" role="button">Next <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></a>
-          </div>
-      </div>
+  <div id="tagdescriptions">
+    Labels:
+    <span th:each="label : ${labels}" th:class="${label}" th:text="${label}"></span>
 
   </div>
+
+  <div class="form-group">
+    <a id="savebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-floppy-disk"
+                                                                   aria-hidden="true"></span> Save</a>
+    <a id="removebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-remove"
+                                                                     aria-hidden="true"></span> Remove All
+      Labels</a>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <div th:utext="${htmlstring}" id="text"/>
+    </div>
+  </div>
+
+
+  <div class="form-group">
+    <div class="btn-group" role="group" aria-label="Next and previous">
+      <a th:if="${previd} != -1" th:href="@{/annotation(taid=${previd})}" href="#"
+         class="btn btn-default saveclass" role="button"><span class="glyphicon glyphicon-menu-left"
+                                                               aria-hidden="true"></span> Previous</a>
+      <a th:if="${nextid} != -1" th:href="@{/annotation(taid=${nextid})}" href="#"
+         class="btn btn-default saveclass" role="button">Next <span class="glyphicon glyphicon-menu-right"
+                                                                    aria-hidden="true"></span></a>
+    </div>
+  </div>
+
+</div>
 </body>
 
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var labels = /*[[${labels}]]*/ [];
+/*]]>*/
+
+</script>
+
 <template id="buttons">
-    <div class="container-fluid">
-
-        <div th:each="label,iterStat : ${labels}" th:if="${iterStat.index % 2 == 0}" class="form-group">
-            <div class="row">
-                <div class="col-md-4">
-                    <button type="button" th:id="${labels[iterStat.index]}" class="btn" th:classappend="${labels[iterStat.index]}" th:field="${labels[iterStat.index]}" th:value="${labels[iterStat.index]}" th:text="${labels[iterStat.index]}"></button>
-                </div><x></x>
-                <div class="col-md-4" th:if="${iterStat.index+1} &lt; ${labels.size()}">
-                    <button type="button" th:id="${labels[iterStat.index+1]}" class="btn" th:classappend="${labels[iterStat.index+1]}" th:field="${labels[iterStat.index+1]}" th:value="${labels[iterStat.index+1]}" th:text="${labels[iterStat.index+1]}"></button>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <div class="row">
-                <div class="col-md-4">
-                    <button type="button" id="O" class="btn btn-default" value="O">No label</button>
-                </div>
-            </div>
-        </div>
-
+  <div class="container-fluid">
+    <div class="form-inline">
+      <div class="form-group">
+        <input type="text" id="class-suggestion" class="typeahead form-control" placeholder="Select a class"
+               data-provide="typeahead" autocomplete="off"/>
+        <button type="button" id="addClass" class="btn btn-default" value="add">Add Class</button>
+        <button type="button" id="O" class="btn btn-default" value="O">No label</button>
+      </div>
     </div>
+
+  </div>
 </template>
 
 </html>

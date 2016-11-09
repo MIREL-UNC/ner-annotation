@@ -13,13 +13,22 @@ $(document).ready(function() {
             return out;
         },
         title: function () {
-            var t = $(this)[0];
-            return "Labeled: " + t.className + ", id: " + t.id;
+            var spanElement = $(this);
+            return "Labeled: " + (getLabel(spanElement) || 'No label') + ", id: " + spanElement.id;
         },
         html: true,
         trigger: "manual"
     }).on("click", function(){
         $(this).popover("toggle");
+
+        // Add autocomplete
+        var input = $('.typeahead');
+        input.typeahead({source:labels, minLength: 0, showHintOnFocus: 'all', items: 'all'});
+        input.focus();
+        var label = getLabel($(this));
+        if (label) {
+            input.val(label);
+        }
     });
 
     $("#removebutton").click(function(){
@@ -39,20 +48,16 @@ $(document).ready(function() {
     });
 
     $(".container").on("click", "button", function(){
-
         var buttonvalue = $(this)[0].value;
-
-        var spanid = $(this).parents("[id^=tok]")[0].id;
-
-        console.log("Clicked on a button..." + buttonvalue);
-        console.log("refers to: " + spanid);
-
-        $("#" + spanid).popover("hide");
+        var spanid = $(this).parents('[id^=tok]')[0].id;
+        $("#" + spanid).popover('hide');
+        // Get the value from input
+        var label = $('.typeahead').typeahead('getActive');
 
         if(buttonvalue == "O"){
             removelabel(spanid);
         }else{
-            addlabel(spanid, buttonvalue);
+            addlabel(spanid, label);
         }
     });
 
@@ -69,13 +74,13 @@ $(document).ready(function() {
     });
 
     // given a span id (e.g. tok-4), return the integer
-    function getnum(spanid){
+    function getnum(spanid) {
         return parseInt(spanid.split("-")[1]);
     }
 
     // check if s is labeled...
     // this expects a string.
-    function isLabeled(spanid){
+    function isLabeled(spanid) {
         if(!spanid.startsWith("#")){
             spanid = "#" + spanid;
         }
@@ -83,7 +88,14 @@ $(document).ready(function() {
         return p.hasClass("cons");
     }
 
-    function isLabel(s, label){
+    // Returns the label of the spanElement or undefined, checking the first class of the parent
+    function getLabel(spanElement) {
+        if (isLabeled(spanElement[0].id)) {
+            return spanElement.parent()[0].classList[0];
+        }
+    }
+
+    function isLabel(s, label) {
         return $(s).parent().hasClass(label);
     }
 
@@ -92,7 +104,6 @@ $(document).ready(function() {
         var pb = $(b).parent().attr("id");
         return pa == pb;
     }
-
 
     $.fn.removeText = function() {
         for (var i=this.length-1; i>=0; --i) removeText(this[i]);
@@ -112,65 +123,61 @@ $(document).ready(function() {
 
     // Given a span, remove the label.
     function removelabel(spanid) {
-
-        if (isLabeled(spanid)) {
-            $("#savebutton").html("<span class=\"glyphicon glyphicon-floppy-disk\" aria-hidden=\"true\"></span> Save");
-            $("#savebutton").css({"border-color" : "#c00"});
-
-
-            console.log("Removing label from: " + spanid);
-
-            var tokobj = $("#" + spanid);
-            var parent = tokobj.parent();
-            var origparentid = parent.id;
-
-            var tokid = getnum(spanid);
-
-            // FIXME: needs to be aware of first and last token positions
-            var prev = "#tok-" + (tokid - 1);
-            var next = "#tok-" + (tokid + 1);
-
-            // really should be... have same parent.
-            //if (isLabeled(prev) && isLabeled(next)) {
-            if(sameparent(tokobj, prev) && sameparent(tokobj, next)){
-                console.log("interior - don't do anything.");
-            } else if (sameparent(tokobj, next)) {
-                var p = tokobj.parent();
-                tokobj.insertBefore(tokobj.parent());
-                p.before(" ");
-            } else if (sameparent(tokobj, prev)) {
-                console.log(tokobj.parent());
-                var p = tokobj.parent();
-                tokobj.insertAfter(tokobj.parent());
-                p.after(" ");
-            } else {
-                // just a singleton.
-                var p = tokobj.parent();
-                tokobj.insertBefore(p);
-                p.remove();
-            }
-
-            fixspanid(parent);
-
-            // think carefully about what to send to server.
-            // we had a constituent, we remove a token on one end.
-            $.ajax({
-                method: "POST",
-                url: "/removetoken",
-                data: {tokid: spanid, id: getParameterByName("taid")}
-            }).done(function (msg) {
-                console.log("successful removal.");
-            });
+        if (!isLabeled(spanid)) {
+            return;
         }
+        $("#savebutton").html("<span class=\"glyphicon glyphicon-floppy-disk\" aria-hidden=\"true\"></span> Save");
+        $("#savebutton").css({"border-color" : "#c00"});
+
+        console.log("Removing label from: " + spanid);
+
+        var tokobj = $("#" + spanid);
+        var parent = tokobj.parent();
+        var origparentid = parent.id;
+
+        var tokid = getnum(spanid);
+
+        // FIXME: needs to be aware of first and last token positions
+        var prev = "#tok-" + (tokid - 1);
+        var next = "#tok-" + (tokid + 1);
+
+        // really should be... have same parent.
+        //if (isLabeled(prev) && isLabeled(next)) {
+        if(sameparent(tokobj, prev) && sameparent(tokobj, next)){
+            console.log("interior - don't do anything.");
+        } else if (sameparent(tokobj, next)) {
+            var p = tokobj.parent();
+            tokobj.insertBefore(tokobj.parent());
+            p.before(" ");
+        } else if (sameparent(tokobj, prev)) {
+            console.log(tokobj.parent());
+            var p = tokobj.parent();
+            tokobj.insertAfter(tokobj.parent());
+            p.after(" ");
+        } else {
+            // just a singleton.
+            var p = tokobj.parent();
+            tokobj.insertBefore(p);
+            p.remove();
+        }
+
+        fixspanid(parent);
+
+        // think carefully about what to send to server.
+        // we had a constituent, we remove a token on one end.
+        $.ajax({
+            method: "POST",
+            url: "/removetoken",
+            data: {tokid: spanid, id: getParameterByName("taid")}
+        }).done(function (msg) {
+            console.log("successful removal.");
+        });
     }
 
 
     // fix the spanid of constituent span.
     function fixspanid(parent){
         var kids = $(parent).children("span");
-
-
-        console.log($(parent).children());
 
         // if no kids, then this is the span to be removed.
         var newspanid = $(parent).attr("id");
@@ -192,10 +199,8 @@ $(document).ready(function() {
             }
         });
 
-
         var hh = $(parent).html();
         $(parent).removeText();
-
 
         return newspanid;
     }
