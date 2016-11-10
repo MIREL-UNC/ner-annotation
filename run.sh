@@ -3,7 +3,7 @@
 if [[ ! -e config/folders.txt ]]; then
     cp config/folders.txt.template config/folders.txt;
 fi;
-if [[ ! -e config/labels.txt ]]; then
-    cp config/labels.txt.template config/labels.txt;
+if [[ ! -e config/labels.json ]]; then
+    cp config/labels.json.template config/labels.json;
 fi;
 mvn spring-boot:run -Drun.addResources=true -Dserver.port=8080

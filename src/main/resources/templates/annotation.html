@@ -4,6 +4,8 @@
   <title>Annotation</title>
 
   <div th:include="base :: head"></div>
+  <script th:src="@{/js/annotation.js}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
 
 </head>
 <body>
@@ -18,7 +20,7 @@
 
   <div id="tagdescriptions">
     Labels:
-    <span th:each="label : ${labels}" th:class="${label}" th:text="${label}"></span>
+    <span th:each="label : ${labels.labels}" th:class="${label.value}" th:text="${label.key}"></span>
 
   </div>
 
@@ -53,7 +55,7 @@
 
 <script th:inline="javascript">
 /*<![CDATA[*/
-    var labels = /*[[${labels}]]*/ [];
+    var primaryLabels = /*[[${labels.labels}]]*/ [];
 /*]]>*/
 
 </script>

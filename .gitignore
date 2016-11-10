@@ -25,8 +25,7 @@ config/folders.txt
 hs_err_pid*
 
 # Auto generated files
-src/main/resources/static/css/labels.css
-config/labels.txt
+config/labels.json
 config/folders.txt
 
 # Data folder

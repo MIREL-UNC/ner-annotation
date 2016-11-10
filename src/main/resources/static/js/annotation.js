@@ -23,7 +23,11 @@ $(document).ready(function() {
 
         // Add autocomplete
         var input = $('.typeahead');
-        input.typeahead({source:labels, minLength: 0, showHintOnFocus: 'all', items: 'all'});
+        input.typeahead({
+            source:Object.keys(primaryLabels), // items: 'all',
+            minLength: 0, showHintOnFocus: 'all'
+        });
+
         input.focus();
         var label = getLabel($(this));
         if (label) {
@@ -230,26 +234,24 @@ $(document).ready(function() {
         //if(isOrg(prev) && isOrg(next)){
         //    console.log("interior");
         //} else
-        if(isLabel(next, newclass)){
+        if (isLabel(next, newclass)) {
             var cons = $(next).parent();
             $(next).before(" ");
             tokobj.detach();
             cons.prepend(tokobj);
-
-
-        }else if (isLabel(prev, newclass)) {
+        } else if (isLabel(prev, newclass)) {
             var cons = $(prev).parent();
             $(prev).after(" ");
             tokobj.detach();
             cons.append(tokobj);
-
-        }else{
+        } else {
             // all on your own.
             var prevsib = tokobj.prev();
             var nextsib = tokobj.next();
 
             tokobj.detach();
-            var cons = $("<span>", {class: newclass + " pointer cons"});
+            var cssClass = primaryLabels[newclass] || 'defaultLabel';
+            var cons = $("<span>", {class: cssClass + " pointer cons"});
             cons.append(tokobj);
 
             // this handles when we click on the first word.
