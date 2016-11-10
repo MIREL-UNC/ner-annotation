@@ -7,6 +7,18 @@ $(document).ready(function() {
 
     var primaryLabels = labels.labels;
 
+    function addLookaheadCompletion(labelIndex, possibleValues, focus) {
+        var input = $('.typeahead-' + labelIndex);
+        input.typeahead({
+            source:possibleValues,
+            minLength: 0, showHintOnFocus: 'all'
+        });
+        if (focus === true) {
+            input.focus();
+        }
+    }
+
+    // Add popover listener to elements.
     $("[id^=tok]").popover({
         placement: "bottom",
         content: function () {
@@ -16,21 +28,21 @@ $(document).ready(function() {
         },
         title: function () {
             var spanElement = $(this);
-            return "Labeled: " + (getLabel(spanElement) || 'No label') + ", id: " + spanElement.id;
+            return "Labeled: " + (getLabel(spanElement) || 'No label') + ", id: " + spanElement[0].id;
         },
         html: true,
         trigger: "manual"
     }).on("click", function(){
         $(this).popover("toggle");
 
-        // Add autocomplete
-        var input = $('.typeahead');
-        input.typeahead({
-            source:Object.keys(primaryLabels), // items: 'all',
-            minLength: 0, showHintOnFocus: 'all'
-        });
+        // Add autocomplete for primary labels
+        addLookaheadCompletion('primary', Object.keys(primaryLabels), true)
+        // Add autocomplete for secondary labels
+        for (var index = 0; index < secondaryLabelNames.length; index++) {
+            var labelName = secondaryLabelNames[index];
+            addLookaheadCompletion(index, labels[labelName], false);
+        }
 
-        input.focus();
         // Fill the current label if token is labeled.
         var label = getLabel($(this));
         if (label) {
@@ -54,6 +66,8 @@ $(document).ready(function() {
         removelabel(spanid);
     });
 
+    // Listener for clicks in the container element.
+    // Used by the two buttons in the tooltip.
     $(".container").on("click", "button", function(){
         var buttonvalue = $(this)[0].value;
         var spanid = $(this).parents('[id^=tok]')[0].id;
@@ -61,9 +75,9 @@ $(document).ready(function() {
         // Get the value from input
         var label = $('.typeahead').typeahead('getActive');
 
-        if(buttonvalue == "O"){
+        if (buttonvalue == "O") {
             removelabel(spanid);
-        }else{
+        } else if (label !== undefined) {
             addlabel(spanid, label);
         }
     });

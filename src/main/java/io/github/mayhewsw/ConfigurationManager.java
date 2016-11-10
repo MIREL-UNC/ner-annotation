@@ -36,4 +36,8 @@ public class ConfigurationManager {
         }
         return DEFAULT_LABELS_FILE;
     }
+
+    public String getPrimaryLabelName() {
+        return properties.get("primaryLabelName").toString();
+    }
 }

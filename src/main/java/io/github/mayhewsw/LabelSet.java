@@ -25,7 +25,7 @@ public class LabelSet {
         secondaryLabelsNames = new ArrayList<>();
         if (originalObject.size() > 1) {  // There are secondary labels.
             for (Object labelName : originalObject.keySet()) {
-                if (labelName != "labels") {
+                if (!labelName.equals("labels")) {
                     secondaryLabelsNames.add((String) labelName);
                 }
             }
