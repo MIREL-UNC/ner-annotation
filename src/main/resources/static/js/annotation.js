@@ -5,6 +5,8 @@ $(document).ready(function() {
         return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     }
 
+    var primaryLabels = labels.labels;
+
     $("[id^=tok]").popover({
         placement: "bottom",
         content: function () {
@@ -29,6 +31,7 @@ $(document).ready(function() {
         });
 
         input.focus();
+        // Fill the current label if token is labeled.
         var label = getLabel($(this));
         if (label) {
             input.val(label);

@@ -25,9 +25,10 @@ config/folders.txt
 hs_err_pid*
 
 # Auto generated files
-config/labels.json
-config/folders.txt
+config/
+!config/config.json.template
 
 # Data folder
 data/
 !data/example-*
+!data/example-labels.json

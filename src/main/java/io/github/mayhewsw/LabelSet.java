@@ -6,18 +6,30 @@ import org.json.simple.parser.ParseException;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Abstraction to manage different types of labels stored in json format.
  */
 public class LabelSet {
     private JSONObject primaryLabels;
+    private JSONObject originalObject;
+    private List<String> secondaryLabelsNames;
 
     public void readFromFile(String filename) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
-        JSONObject labels = (JSONObject) parser.parse(new FileReader(filename));
-        primaryLabels = (JSONObject) labels.get("labels");
+        originalObject = (JSONObject) parser.parse(new FileReader(filename));
+        primaryLabels = (JSONObject) originalObject.get("labels");
+        secondaryLabelsNames = new ArrayList<>();
+        if (originalObject.size() > 1) {  // There are secondary labels.
+            for (Object labelName : originalObject.keySet()) {
+                if (labelName != "labels") {
+                    secondaryLabelsNames.add((String) labelName);
+                }
+            }
+        }
     }
 
     public String getCssClass(String labelName) {
@@ -29,9 +41,11 @@ public class LabelSet {
         return labelClass;
     }
 
-    public HashMap<String, JSONObject> toHashMap() {
-        HashMap<String, JSONObject> map = new HashMap<>();
-        map.put("labels", primaryLabels);
-        return map;
+    public JSONObject toHashMap() {
+        return originalObject;
+    }
+
+    public List<String> getSecondaryLabelNames() {
+        return secondaryLabelsNames;
     }
 }

@@ -1,0 +1,12 @@
+{
+    "folders": {
+        "English": {
+            "location": "data/example-eng-tas/", "format": "ta"
+        },
+        "EnglishConll": {
+            "location": "data/example-eng-conll/", "format": "conll"
+        },
+    },
+    "labelFile": "data/example-labels.json",
+    "primaryLabelName": ""
+}

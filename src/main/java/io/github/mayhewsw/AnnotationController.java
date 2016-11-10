@@ -5,7 +5,6 @@ import edu.illinois.cs.cogcomp.core.datastructures.ViewNames;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.Constituent;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.TextAnnotation;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.View;
-import edu.illinois.cs.cogcomp.core.io.LineIO;
 import edu.illinois.cs.cogcomp.core.utilities.SerializationHelper;
 import edu.illinois.cs.cogcomp.core.utilities.StringUtils;
 import edu.illinois.cs.cogcomp.nlp.corpusreaders.CoNLLNerReader;
@@ -34,12 +33,10 @@ public class AnnotationController {
 
     private static Logger logger = LoggerFactory.getLogger(AnnotationController.class);
 
-    private HashMap<String, String> folders;
     private LabelSet labels;
-    private HashMap<String, String> foldertypes;
+    private ConfigurationManager config;
     private final String FOLDERTA = "ta";
     private final String FOLDERCONLL = "conll";
-    private final String LABELS_FILE = "config/labels.json";
 
     /**
      * When this class is loaded, it reads a file called config/folders.txt. This is made up
@@ -50,27 +47,15 @@ public class AnnotationController {
      *
      * @throws FileNotFoundException
      */
-    public AnnotationController() throws IOException {
+    public AnnotationController() throws IOException, ParseException {
 
-        logger.debug("Loading folders.txt");
-        List<String> lines = LineIO.read("config/folders.txt");
-        folders = new HashMap<>();
-        foldertypes = new HashMap<>();
-        for (String line : lines) {
-            if (line.length() == 0 || line.startsWith("#")) {
-                continue;
-            }
-            String[] sl = line.trim().split("\\s+");
-            logger.debug(line);
-            logger.debug(sl.length + "");
-            folders.put(sl[0], sl[1]);
-            foldertypes.put(sl[0], sl[2]);
-        }
+        logger.debug("Loading properties");
+        config = new ConfigurationManager("config/config.json");
 
         logger.debug("Loading labels.txt");
         labels = new LabelSet();
         try {
-            labels.readFromFile(LABELS_FILE);
+            labels.readFromFile(config.getLabelsLocation());
         } catch (ParseException e) {
             logger.info(e.toString());
         }
@@ -89,8 +74,9 @@ public class AnnotationController {
      */
     public TreeMap<String, TextAnnotation> loadFolder(String folder, String username) throws IOException {
 
-        String folderurl = folders.get(folder);
-        String foldertype = foldertypes.get(folder);
+        JSONObject folderConfig = (JSONObject) config.getFolderProperties(folder);
+        String folderurl = folderConfig.get("location").toString();
+        String foldertype = folderConfig.get("format").toString();
 
         File f = new File(folderurl);
 
@@ -180,8 +166,9 @@ public class AnnotationController {
         // write out to
         String username = (String) hs.getAttribute("username");
         String folder = (String) hs.getAttribute("dataname");
-        String folderpath = folders.get(folder);
-        String foldertype = foldertypes.get(folder);
+        JSONObject folderConfig = (JSONObject) config.getFolderProperties(folder);
+        String folderpath = folderConfig.get("location").toString();
+        String foldertype = folderConfig.get("format").toString();
 
         if (username != null && folderpath != null) {
 
@@ -207,7 +194,7 @@ public class AnnotationController {
 
     @RequestMapping("/")
     public String home(Model model) {
-        model.addAttribute("folders", folders.keySet());
+        model.addAttribute("folders", config.getFolderNames());
         model.addAttribute("user", new User());
         return "home";
     }
@@ -303,6 +290,7 @@ public class AnnotationController {
         }
 
         model.addAttribute("labels", labels.toHashMap());
+        model.addAttribute("secondaryLabels", labels.getSecondaryLabelNames());
 
         return "annotation";
     }

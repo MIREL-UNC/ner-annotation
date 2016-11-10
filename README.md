@@ -2,7 +2,9 @@
 
 ![Screenshot of web interface](/src/main/resources/static/img/screenshot.png?raw=true "Screenshot")
 
-A tool for annotating word sequences. 
+A tool for annotating word sequences.
+
+This fork focuses on annotation for multiple tasks at the same time, expecting a (possibly) large number of labels.
 
 ## Configuration
 
