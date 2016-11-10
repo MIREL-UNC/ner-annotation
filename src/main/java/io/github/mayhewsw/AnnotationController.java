@@ -10,7 +10,6 @@ import edu.illinois.cs.cogcomp.core.utilities.SerializationHelper;
 import edu.illinois.cs.cogcomp.core.utilities.StringUtils;
 import edu.illinois.cs.cogcomp.nlp.corpusreaders.CoNLLNerReader;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
@@ -37,10 +35,11 @@ public class AnnotationController {
     private static Logger logger = LoggerFactory.getLogger(AnnotationController.class);
 
     private HashMap<String, String> folders;
-    private JSONObject labels;
+    private LabelSet labels;
     private HashMap<String, String> foldertypes;
     private final String FOLDERTA = "ta";
     private final String FOLDERCONLL = "conll";
+    private final String LABELS_FILE = "config/labels.json";
 
     /**
      * When this class is loaded, it reads a file called config/folders.txt. This is made up
@@ -69,8 +68,9 @@ public class AnnotationController {
         }
 
         logger.debug("Loading labels.txt");
+        labels = new LabelSet();
         try {
-            readLabels();
+            labels.readFromFile(LABELS_FILE);
         } catch (ParseException e) {
             logger.info(e.toString());
         }
@@ -279,11 +279,7 @@ public class AnnotationController {
             int end = c.getEndSpan();
 
             // important to also include 'cons' class, as it is a keyword in the html
-            Object labelClassObj = ((JSONObject) labels.get("labels")).get(c.getLabel());
-            String labelClass = "defaultLabel";
-            if (labelClassObj != null) {
-                labelClass = labelClassObj.toString();
-            }
+            String labelClass = labels.getCssClass(c.getLabel());
             text[start] = String.format(
                     "<span class='%s pointer cons %s' id='cons-%d-%d'>%s", c.getLabel(), labelClass,
                     start, end, text[start]);
@@ -306,17 +302,9 @@ public class AnnotationController {
             model.addAttribute("nextid", -1);
         }
 
-        model.addAttribute("labels", labels);
+        model.addAttribute("labels", labels.toHashMap());
 
         return "annotation";
-    }
-
-    /*
-     * Read labels from file
-     */
-    public void readLabels() throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-        labels = (JSONObject) parser.parse(new FileReader("config/labels.json"));
     }
 
     /**
