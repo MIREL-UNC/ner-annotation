@@ -1,90 +1,172 @@
+
 $(document).ready(function() {
+    // Class to represent a group of labels as a single string.
+    var CompoundLabel = class CompoundLabel {
+        constructor() {
+            this.reset();
+        }
+        // constructor
+        addValue(labelName, value) {
+            if (value !== undefined) {
+                this.labelMap[labelName] = value.split('|')[0];
+                this.hasValue = true;
+            }
+        }
+
+        reset() {
+            this.labelMap = {};
+            this.hasValue = false;
+        }
+
+        fromString(labelString) {
+            this.reset();
+            var labelParts = labelString.split('#');
+            var labelTypes = Object.keys(labelPositions);
+            for (var index = 0; index < labelTypes.length; index++) {
+                var labelName = labelTypes[index];
+                var value = labelParts[labelPositions[labelName]];
+                this.addValue(labelName, value);
+            }
+            return this;
+        }
+
+        getByName(labelName) {
+            return this.labelMap[labelName];
+        }
+
+        toString() {
+            if (!this.hasValue) {
+                return '';
+            }
+            var orderedLabels = [];
+            var labelTypes = Object.keys(labelPositions);
+            for (var index = 0; index < labelTypes.length; index++) {
+                var labelName = labelTypes[index];
+                orderedLabels[labelPositions[labelName]] = this.labelMap[labelName];
+            }
+            return orderedLabels.join('#');
+        }
+    };
 
     function getParameterByName(name) {
-        var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        var match = RegExp('[?&]' + name + '=([^&]*)').exec(
+            window.location.search);
         return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     }
 
     var primaryLabels = labels.labels;
 
-    function addLookaheadCompletion(labelIndex, possibleValues, focus) {
+    function addTypeaheadCompletion(labelIndex, possibleValues, focus,
+                                    defaultValue) {
         var input = $('.typeahead-' + labelIndex);
         input.typeahead({
-            source:possibleValues,
+            source: possibleValues, autoselect: false,
             minLength: 0, showHintOnFocus: 'all'
         });
         if (focus === true) {
             input.focus();
         }
+        if (defaultValue !== undefined) {
+            input.val(defaultValue);
+        }
     }
 
-    // Add popover listener to elements.
-    $("[id^=tok]").popover({
-        placement: "bottom",
-        content: function () {
-            var html = $("#buttons").html();
-            var out = "<div id='" + $(this)[0].id + "'>" + html + "</div>";
-            return out;
-        },
-        title: function () {
-            var spanElement = $(this);
-            return "Labeled: " + (getLabel(spanElement) || 'No label') + ", id: " + spanElement[0].id;
-        },
-        html: true,
-        trigger: "manual"
-    }).on("click", function(){
-        $(this).popover("toggle");
-
+    // Add lookahead autocompletion for all label input fields.
+    // Fill the inputs with the existitng label of the entity.
+    function setTypeaheads(tokenElement) {
+        // Get current labels
+        var stringLabel = getLabel(tokenElement);
+        // Fill the current label if token is labeled.
+        var label = new CompoundLabel();
+        if (stringLabel) {
+            label.fromString(stringLabel);
+        }
         // Add autocomplete for primary labels
-        addLookaheadCompletion('primary', Object.keys(primaryLabels), true)
+        addTypeaheadCompletion('primary', Object.keys(primaryLabels), true,
+                               label.getByName(primaryLabelName));
         // Add autocomplete for secondary labels
         for (var index = 0; index < secondaryLabelNames.length; index++) {
             var labelName = secondaryLabelNames[index];
-            addLookaheadCompletion(index, labels[labelName], false);
+            addTypeaheadCompletion(index, labels[labelName], false,
+                                   label.getByName(labelName));
         }
 
-        // Fill the current label if token is labeled.
-        var label = getLabel($(this));
-        if (label) {
-            input.val(label);
+    }
+
+    // Returns the string representing the (compound) variable
+    function getLabelFromInputs() {
+        var addValue = function(inputSelector, labelName, label) {
+            // Do not use typeahead('getActive'), it will return the last
+            // selected element, not the current input.
+            var value = $(inputSelector).val();
+            if (value != '') {
+                label.addValue(labelName, value);
+            }
+        };
+        var label = new CompoundLabel();
+        addValue('.typeahead-primary', primaryLabelName, label);
+        for (var index = 0; index < secondaryLabelNames.length; index++) {
+            addValue('.typeahead-' + index, secondaryLabelNames[index], label);
         }
+        return label.toString();
+    }
+
+    // Add popover listener to elements.
+    $('[id^=tok]').popover({
+        placement: 'bottom',
+        content: function() {
+            var html = $('#buttons').html();
+            var out = "<div id='" + $(this)[0].id + "'>" + html + "</div>";
+            return out;
+        },
+        title: function() {
+            var spanElement = $(this);
+            return 'Labeled: ' + (getLabel(spanElement) || 'No label') + ', id: ' + spanElement[0].id;
+        },
+        html: true,
+        trigger: 'manual'
+    }).on('click', function() {
+        $(this).popover('toggle');
+        setTypeaheads($(this));
     });
 
-    $("#removebutton").click(function(){
-        $.each($("[id^=tok]"), function(i, v){
+    $('#removebutton').click(function() {
+        $.each($('[id^=tok]'), function(i, v) {
             console.log(v);
             removelabel(v.id);
         });
     });
 
     // on right click, change label to nothing.
-    $("[id^=tok]").contextmenu(function(event){
+    $('[id^=tok]').contextmenu(function(event){
         event.preventDefault();
         var spanid = event.currentTarget.id;
-        console.log("Right clicked on " + spanid);
+        console.log('Right clicked on ' + spanid);
 
         removelabel(spanid);
     });
 
     // Listener for clicks in the container element.
     // Used by the two buttons in the tooltip.
-    $(".container").on("click", "button", function(){
+    $('.container').on('click', 'button', function() {
         var buttonvalue = $(this)[0].value;
         var spanid = $(this).parents('[id^=tok]')[0].id;
-        $("#" + spanid).popover('hide');
-        // Get the value from input
-        var label = $('.typeahead').typeahead('getActive');
+        $('#' + spanid).popover('hide');
 
-        if (buttonvalue == "O") {
+        if (buttonvalue == 'O') {
             removelabel(spanid);
-        } else if (label !== undefined) {
-            addlabel(spanid, label);
+        } else {
+            // Get the value from inputs
+            var label = getLabelFromInputs();
+            if (label !== '') {
+                addlabel(spanid, label);
+            }
         }
     });
 
-    $('body').on('click', function (e) {
+    $('body').on('click', function(e) {
 
-        $('[id^=tok]').each(function () {
+        $('[id^=tok]').each(function() {
             //the 'is' for buttons that trigger popups
             //the 'has' for icons within a button that triggers a popup
             if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
@@ -102,11 +184,11 @@ $(document).ready(function() {
     // check if s is labeled...
     // this expects a string.
     function isLabeled(spanid) {
-        if(!spanid.startsWith("#")){
-            spanid = "#" + spanid;
+        if (!spanid.startsWith('#')) {
+            spanid = '#' + spanid;
         }
         var p = $(spanid).parent();
-        return p.hasClass("cons");
+        return p.hasClass('cons');
     }
 
     // Returns the label of the spanElement or undefined, checking the first class of the parent
@@ -120,23 +202,23 @@ $(document).ready(function() {
         return $(s).parent().hasClass(label);
     }
 
-    function sameparent(a, b){
-        var pa = $(a).parent().attr("id");
-        var pb = $(b).parent().attr("id");
+    function sameparent(a, b) {
+        var pa = $(a).parent().attr('id');
+        var pb = $(b).parent().attr('id');
         return pa == pb;
     }
 
     $.fn.removeText = function() {
-        for (var i=this.length-1; i>=0; --i) removeText(this[i]);
+        for (var i = this.length - 1; i >= 0; --i) removeText(this[i]);
     };
 
     function removeText(node) {
         console.log(node.childNodes);
         if (!node || !node.childNodes || !node.childNodes.length) return;
-        for (var i=node.childNodes.length-1; i>=0; --i) {
+        for (var i = node.childNodes.length - 1; i >= 0; --i) {
             var childNode = node.childNodes[i];
             console.log(childNode + " " + i);
-            if (childNode.nodeType === 3 && (i == 0 || i == node.childNodes.length-1))
+            if (childNode.nodeType === 3 && (i == 0 || i == node.childNodes.length - 1))
                 node.removeChild(childNode);
             //else if (childNode.nodeType === 1) removeText(childNode);
         }
@@ -231,21 +313,22 @@ $(document).ready(function() {
     function addlabel(spanid, newclass) {
         console.log("Adding " + newclass + " to " + spanid);
 
-        $("#savebutton").html("<span class=\"glyphicon glyphicon-floppy-disk\" aria-hidden=\"true\"></span> Save");
-        $("#savebutton").css({"border-color" : "#c00"});
+        $('#savebutton').html('<span class="glyphicon glyphicon-floppy-disk" ' +
+                              'aria-hidden="true"></span> Save');
+        $('#savebutton').css({'border-color' : '#c00'});
 
         var tokid = getnum(spanid);
 
         var tokobj = $("#" + spanid);
 
         // remove label.
-        if(isLabeled(spanid)){
+        if (isLabeled(spanid)) {
             removelabel(spanid);
         }
 
         // FIXME: needs to be aware of first and last token positions
-        var prev= "#tok-" + (tokid -1);
-        var next = "#tok-" + (tokid + 1);
+        var prev = '#tok-' + (tokid - 1);
+        var next = '#tok-' + (tokid + 1);
 
         // TODO: decide on logic for interior case.
         //if(isOrg(prev) && isOrg(next)){
@@ -267,17 +350,22 @@ $(document).ready(function() {
             var nextsib = tokobj.next();
 
             tokobj.detach();
-            var cssClass = primaryLabels[newclass] || 'defaultLabel';
-            var cons = $("<span>", {class: cssClass + " pointer cons"});
+            var label = new CompoundLabel();
+            primaryClass = label.fromString(newclass)
+                .getByName(primaryLabelName);
+            var cssClass = primaryLabels[primaryClass] || 'defaultLabel';
+            var cons = $('<span>', {
+                class: newclass + ' pointer cons ' + cssClass
+            });
             cons.append(tokobj);
 
             // this handles when we click on the first word.
-            if(!prevsib.hasClass("pointer")){
+            if (!prevsib.hasClass('pointer')) {
                 cons.insertBefore(nextsib);
-                nextsib.before(" ");
-            }else{
+                nextsib.before(' ');
+            } else {
                 cons.insertAfter(prevsib);
-                prevsib.after(" ");
+                prevsib.after(' ');
             }
         }
 
@@ -285,15 +373,18 @@ $(document).ready(function() {
         var newspanid = fixspanid(tokobj.parent());
 
         $.ajax({
-            method: "POST",
-            url: "/addtoken",
-            data: {label: newclass, spanid: newspanid, id: getParameterByName("taid")}
-        }).done(function (msg) {
-            console.log("successful label add.");
+            method: 'POST',
+            url: '/addtoken',
+            data: {
+                label: newclass, spanid: newspanid,
+                id: getParameterByName('taid')
+            }
+        }).done(function(msg) {
+            console.log('successful label add.');
         });
     };
 
-    function save(){
+    function save() {
         var taid = getParameterByName("taid");
         console.log("saving ta: " + taid);
 
@@ -304,13 +395,13 @@ $(document).ready(function() {
                 // setting a timeout
                 $("#savebutton").html("<span class=\"fa fa-spinner fa-spin\"></span> Saving...");
             }
-        }).done(function () {
+        }).done(function() {
             console.log("finished saving!");
             $("#savebutton").html("<span class=\"glyphicon glyphicon-ok\" aria-hidden=\"true\"></span> Saved!");
             $("#savebutton").css({"border-color" : ""});
         });
 
     }
-    $( ".saveclass" ).click(save);
-    $( "#savebutton" ).click(save);
+    $('.saveclass').click(save);
+    $('#savebutton').click(save);
 });

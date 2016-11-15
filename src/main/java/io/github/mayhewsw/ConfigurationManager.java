@@ -40,4 +40,8 @@ public class ConfigurationManager {
     public String getPrimaryLabelName() {
         return properties.get("primaryLabelName").toString();
     }
+
+    public Object getLabelPositions() {
+        return properties.get("labelPositions");
+    }
 }

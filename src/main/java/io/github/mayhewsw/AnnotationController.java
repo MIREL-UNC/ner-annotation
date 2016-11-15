@@ -292,6 +292,7 @@ public class AnnotationController {
         model.addAttribute("labels", labels.toHashMap());
         model.addAttribute("secondaryLabels", labels.getSecondaryLabelNames());
         model.addAttribute("primaryLabelName", config.getPrimaryLabelName());
+        model.addAttribute("labelPositions", config.getLabelPositions());
 
         return "annotation";
     }
