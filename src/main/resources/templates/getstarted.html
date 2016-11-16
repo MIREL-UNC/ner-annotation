@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
-<head> 
+<head>
     <title>Getting Started</title>
     <div th:include="base :: head"></div>
 
@@ -9,17 +9,14 @@
 <div th:include="base :: nav"></div>
   <div class="container">
       <h3>Let's get started</h3>
-
-          <!--<a class="btn btn-primary" href="/annotation?taid=0&amp;cid=0" >Let's go!</a>-->
-
-      <table class="table">
+      <table class="table table-hover">
           <tr>
               <th>ID</th>
               <th>Text annotation</th>
           </tr>
           <tr th:each="key : ${session.tas.keySet()}">
-              <td th:text="${key}"></td>
-              <td><a href="#" th:href="@{/annotation(taid=${key})}" th:text="${session.tas.get(key)}"></a></td>
+              <td th:text="${#strings.replace(#strings.abbreviate(key,50),'_', ' ')}"></td>
+              <td><a href="#" th:href="@{/annotation(taid=${key})}" th:text="${#strings.abbreviate(session.tas.get(key),200)}"></a></td>
           </tr>
       </table>
 
