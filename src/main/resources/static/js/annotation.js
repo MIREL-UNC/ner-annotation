@@ -1,51 +1,50 @@
 
 $(document).ready(function() {
     // Class to represent a group of labels as a single string.
-    var CompoundLabel = class CompoundLabel {
-        constructor() {
-            this.reset();
-        }
-        // constructor
-        addValue(labelName, value) {
-            if (value !== undefined) {
-                this.labelMap[labelName] = value.split('|')[0];
-                this.hasValue = true;
-            }
-        }
+    var CompoundLabel = function() {
+        this.reset();
+    }
 
-        reset() {
-            this.labelMap = {};
-            this.hasValue = false;
+    // constructor
+    CompoundLabel.prototype.addValue = function(labelName, value) {
+        if (value !== undefined) {
+            this.labelMap[labelName] = value.split('|')[0];
+            this.hasValue = true;
         }
+    };
 
-        fromString(labelString) {
-            this.reset();
-            var labelParts = labelString.split('#');
-            var labelTypes = Object.keys(labelPositions);
-            for (var index = 0; index < labelTypes.length; index++) {
-                var labelName = labelTypes[index];
-                var value = labelParts[labelPositions[labelName]];
-                this.addValue(labelName, value);
-            }
-            return this;
-        }
+    CompoundLabel.prototype.reset = function() {
+        this.labelMap = {};
+        this.hasValue = false;
+    };
 
-        getByName(labelName) {
-            return this.labelMap[labelName];
+    CompoundLabel.prototype.fromString = function(labelString) {
+        this.reset();
+        var labelParts = labelString.split('#');
+        var labelTypes = Object.keys(labelPositions);
+        for (var index = 0; index < labelTypes.length; index++) {
+            var labelName = labelTypes[index];
+            var value = labelParts[labelPositions[labelName]];
+            this.addValue(labelName, value);
         }
+        return this;
+    };
 
-        toString() {
-            if (!this.hasValue) {
-                return '';
-            }
-            var orderedLabels = [];
-            var labelTypes = Object.keys(labelPositions);
-            for (var index = 0; index < labelTypes.length; index++) {
-                var labelName = labelTypes[index];
-                orderedLabels[labelPositions[labelName]] = this.labelMap[labelName];
-            }
-            return orderedLabels.join('#');
+    CompoundLabel.prototype.getByName = function(labelName) {
+        return this.labelMap[labelName];
+    };
+
+    CompoundLabel.prototype.toString = function() {
+        if (!this.hasValue) {
+            return '';
         }
+        var orderedLabels = [];
+        var labelTypes = Object.keys(labelPositions);
+        for (var index = 0; index < labelTypes.length; index++) {
+            var labelName = labelTypes[index];
+            orderedLabels[labelPositions[labelName]] = this.labelMap[labelName];
+        }
+        return orderedLabels.join('#');
     };
 
     function getParameterByName(name) {
@@ -105,8 +104,10 @@ $(document).ready(function() {
         };
         var label = new CompoundLabel();
         addValue('.typeahead-primary', primaryLabelName, label);
+        console.log(label.labelMap);
         for (var index = 0; index < secondaryLabelNames.length; index++) {
             addValue('.typeahead-' + index, secondaryLabelNames[index], label);
+            console.log(label.labelMap);
         }
         return label.toString();
     }
@@ -184,7 +185,7 @@ $(document).ready(function() {
     // check if s is labeled...
     // this expects a string.
     function isLabeled(spanid) {
-        if (!spanid.startsWith('#')) {
+        if (spanid.charAt(0) != '#') {
             spanid = '#' + spanid;
         }
         var p = $(spanid).parent();
