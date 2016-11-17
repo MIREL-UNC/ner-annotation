@@ -165,7 +165,7 @@ $(document).ready(function() {
             var labelName = secondaryLabelNames[index];
             possibleValues = labels[labelName].concat(
                 newLabels.getNewLabelsByType(labelName));
-            addTypeaheadCompletion(index, labels[labelName], false,
+            addTypeaheadCompletion(index, possibleValues, false,
                                    label.getByName(labelName));
         }
 
@@ -327,7 +327,7 @@ $(document).ready(function() {
 
         // really should be... have same parent.
         //if (isLabeled(prev) && isLabeled(next)) {
-        if(sameparent(tokobj, prev) && sameparent(tokobj, next)){
+        if (sameparent(tokobj, prev) && sameparent(tokobj, next)) {
             console.log("interior - don't do anything.");
         } else if (sameparent(tokobj, next)) {
             var p = tokobj.parent();
