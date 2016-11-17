@@ -247,17 +247,21 @@ $(document).ready(function() {
         }
     });
 
-    $('body').on('click', function(e) {
+    // TODO (milit) Decide what to do whit this code. It closes the popover
+    // if you click in the body and it's not a button. But it consumes a lot of
+    // time doing the each function when the document is long.
+    // The problem: I don't know the behaviour when two popovers are open at the
+    // same time.
+    // $('body').on('click', function(e) {
+    //     $('[id^=tok]').each(function() {
+    //         //the 'is' for buttons that trigger popups
+    //         //the 'has' for icons within a button that triggers a popup
+    //         if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
+    //             $(this).popover('hide');
+    //         }
+    //     });
 
-        $('[id^=tok]').each(function() {
-            //the 'is' for buttons that trigger popups
-            //the 'has' for icons within a button that triggers a popup
-            if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
-                $(this).popover('hide');
-            }
-        });
-
-    });
+    // });
 
     // given a span id (e.g. tok-4), return the integer
     function getnum(spanid) {
