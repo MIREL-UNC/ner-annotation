@@ -116,6 +116,10 @@ $(document).ready(function() {
         }
     };
 
+    NewLabelSet.prototype.getNewLabelsByType = function(labelType) {
+        return this.newLabelsMap[labelType] || [];
+    };
+
     var primaryLabels = labels.labels;
     var newLabels = new NewLabelSet('new-labels');
 
@@ -151,11 +155,16 @@ $(document).ready(function() {
             label.fromString(stringLabel);
         }
         // Add autocomplete for primary labels
-        addTypeaheadCompletion('primary', Object.keys(primaryLabels), true,
+        var possibleValues = Object.keys(primaryLabels).concat(
+            newLabels.getNewLabelsByType(primaryLabelName));
+        console.log(possibleValues);
+        addTypeaheadCompletion('primary', possibleValues, true,
                                label.getByName(primaryLabelName));
         // Add autocomplete for secondary labels
         for (var index = 0; index < secondaryLabelNames.length; index++) {
             var labelName = secondaryLabelNames[index];
+            possibleValues = labels[labelName].concat(
+                newLabels.getNewLabelsByType(labelName));
             addTypeaheadCompletion(index, labels[labelName], false,
                                    label.getByName(labelName));
         }
