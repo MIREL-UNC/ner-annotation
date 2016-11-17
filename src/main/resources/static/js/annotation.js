@@ -58,6 +58,7 @@ $(document).ready(function() {
         newLabels = Object.keys(rawNewLabels);
         for (var typeInd = newLabels.length - 1; typeInd >= 0; typeInd--) {
             var labelType = newLabels[typeInd];
+            console.log('Adding label type' + labelType);
             this.addLabelType(labelType);
             for (var valueInd = rawNewLabels[labelType].length - 1;
                  valueInd >= 0; valueInd--) {
@@ -68,9 +69,8 @@ $(document).ready(function() {
     };
 
     NewLabelSet.prototype.deleteNewLabel = function(event) {
-        var element = $(event.toElement);
-        var labelValue = element.text();
-        var labelType = element.attr('value');
+        var labelValue = event.target.text;
+        var labelType = event.target.getAttribute('value');
         var labelIndex = this.newLabelsMap[labelType].indexOf(labelValue);
         $.ajax({
                 method: 'POST',
@@ -79,7 +79,7 @@ $(document).ready(function() {
             }).done(function(msg) {
             });
         this.newLabelsMap[labelType].splice(labelIndex, 1);
-        element.remove();
+        $('#' + event.target.id).remove();
     };
 
     NewLabelSet.prototype.addLabelType = function(labelType) {
@@ -92,6 +92,8 @@ $(document).ready(function() {
         newElement.click(function(element) {
             newLabels.deleteNewLabel(element);
         });
+        newElement.attr('id', ('newlabel-' + labelType + '-' + labelValue)
+            .replace(' ', '_'));
         newElement.attr('value', labelType);
         this.div.append(newElement);
         this.newLabelsMap[labelType].push(labelValue);
