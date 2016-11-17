@@ -1,9 +1,11 @@
 
 $(document).ready(function() {
-    // Class to represent a group of labels as a single string.
+    /*
+     * Class to represent a group of labels as a single string.
+     */
     var CompoundLabel = function() {
         this.reset();
-    }
+    };
 
     // constructor
     CompoundLabel.prototype.addValue = function(labelName, value) {
@@ -47,13 +49,81 @@ $(document).ready(function() {
         return orderedLabels.join('#');
     };
 
+    /*
+     * Class to abstract the set of new labels
+     */
+    var NewLabelSet = function(divId, newLabels) {
+        this.newLabelsMap = {};
+        this.div = $('#' + divId);
+        newLabels = Object.keys(rawNewLabels);
+        for (var typeInd = newLabels.length - 1; typeInd >= 0; typeInd--) {
+            var labelType = newLabels[typeInd];
+            this.addLabelType(labelType);
+            for (var valueInd = rawNewLabels[labelType].length - 1;
+                 valueInd >= 0; valueInd--) {
+                this._addLabelToDiv(labelType,
+                                    rawNewLabels[labelType][valueInd]);
+            }
+        }
+    };
+
+    NewLabelSet.prototype.deleteNewLabel = function(event) {
+        var element = $(event.toElement);
+        var labelValue = element.text();
+        var labelType = element.attr('value');
+        var labelIndex = this.newLabelsMap[labelType].indexOf(labelValue);
+        $.ajax({
+                method: 'POST',
+                url: '/removelabel',
+                data: {labelValue: labelValue, labelType: labelType}
+            }).done(function(msg) {
+            });
+        this.newLabelsMap[labelType].splice(labelIndex, 1);
+        element.remove();
+    };
+
+    NewLabelSet.prototype.addLabelType = function(labelType) {
+        this.newLabelsMap[labelType] = [];
+    };
+
+    NewLabelSet.prototype._addLabelToDiv = function(labelType, labelValue) {
+        var newElement = $('<a></a>');
+        newElement.text(labelValue);
+        newElement.click(function(element) {
+            newLabels.deleteNewLabel(element);
+        });
+        newElement.attr('value', labelType);
+        this.div.append(newElement);
+        this.newLabelsMap[labelType].push(labelValue);
+    };
+
+    NewLabelSet.prototype.addLabel = function(labelType, labelValue) {
+        // The label is new
+        if (this.newLabelsMap[labelType] === undefined) {
+            this.addLabelType(labelType);
+        }
+
+        if (this.newLabelsMap[labelType].indexOf(labelValue) == -1) {
+            this._addLabelToDiv(labelType, labelValue);
+            // Call the server to add the label
+            $.ajax({
+                method: 'POST',
+                url: '/addlabel',
+                data: {labelValue: labelValue, labelType: labelType}
+            }).done(function(msg) {
+                console.log('successful adding label.');
+            });
+        }
+    };
+
+    var primaryLabels = labels.labels;
+    var newLabels = new NewLabelSet('new-labels');
+
     function getParameterByName(name) {
         var match = RegExp('[?&]' + name + '=([^&]*)').exec(
             window.location.search);
         return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     }
-
-    var primaryLabels = labels.labels;
 
     function addTypeaheadCompletion(labelIndex, possibleValues, focus,
                                     defaultValue) {
@@ -93,21 +163,22 @@ $(document).ready(function() {
     }
 
     // Returns the string representing the (compound) variable
-    function getLabelFromInputs() {
-        var addValue = function(inputSelector, labelName, label) {
+    function getLabelFromInputs(addNew) {
+        var addValue = function(selector, labelName, label) {
             // Do not use typeahead('getActive'), it will return the last
             // selected element, not the current input.
-            var value = $(inputSelector).val();
+            var value = $(selector).val();
             if (value != '') {
+                if (addNew && $(selector).typeahead('getActive') != value) {
+                    newLabels.addLabel(labelName, value);
+                }
                 label.addValue(labelName, value);
             }
         };
         var label = new CompoundLabel();
         addValue('.typeahead-primary', primaryLabelName, label);
-        console.log(label.labelMap);
         for (var index = 0; index < secondaryLabelNames.length; index++) {
             addValue('.typeahead-' + index, secondaryLabelNames[index], label);
-            console.log(label.labelMap);
         }
         return label.toString();
     }
@@ -158,7 +229,7 @@ $(document).ready(function() {
             removelabel(spanid);
         } else {
             // Get the value from inputs
-            var label = getLabelFromInputs();
+            var label = getLabelFromInputs(true);
             if (label !== '') {
                 addlabel(spanid, label);
             }
@@ -399,7 +470,11 @@ $(document).ready(function() {
         }).done(function() {
             console.log("finished saving!");
             $("#savebutton").html("<span class=\"glyphicon glyphicon-ok\" aria-hidden=\"true\"></span> Saved!");
-            $("#savebutton").css({"border-color" : ""});
+            $('#savebutton').css({'border-color' : ''});
+            // Delete the new keys
+            rawNewLabels = {};
+            $('#new-labels a').remove();
+            newLabels = new NewLabelSet('new-labels');
         });
 
     }

@@ -30,11 +30,16 @@
     width: 100px;
 }
 
-#tagdescriptions {
+.label-descriptions {
     margin: 10px;
 }
 
-#tagdescriptions span {
+.label-descriptions span {
+    padding: 2px;
+    border-radius: 2px;
+}
+
+.label-descriptions a {
     padding: 2px;
     border-radius: 2px;
 }

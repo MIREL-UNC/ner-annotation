@@ -18,12 +18,6 @@
     </h1>
   </div>
 
-  <div id="tagdescriptions">
-    Labels:
-    <span th:each="label : ${labels.labels}" th:class="${label.value}" th:text="${label.key}"></span>
-
-  </div>
-
   <div class="form-group">
     <a id="savebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-floppy-disk"
                                                                    aria-hidden="true"></span> Save</a>
@@ -31,6 +25,14 @@
                                                                      aria-hidden="true"></span> Remove All
       Labels</a>
   </div>
+
+  <div class="label-descriptions">
+    Labels:
+    <span th:each="label : ${labels.labels}" th:class="${label.value}" th:text="${label.key}"></span>
+
+  </div>
+
+  <div id="new-labels" class="label-descriptions">New labels to save (click to remove): </div>
 
   <div class="panel panel-default">
     <div class="panel-body">
@@ -59,6 +61,7 @@
     var secondaryLabelNames = /*[[${secondaryLabels}]]*/ [];
     var labelPositions = /*[[${labelPositions}]]*/ [];
     var primaryLabelName = /*[[${primaryLabelName}]]*/ [];
+    var rawNewLabels = /*[[${newLabels}]]*/ [];
 /*]]>*/
 
 </script>

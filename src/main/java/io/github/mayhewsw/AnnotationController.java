@@ -55,7 +55,7 @@ public class AnnotationController {
         logger.debug("Loading labels.txt");
         labels = new LabelSet();
         try {
-            labels.readFromFile(config.getLabelsLocation());
+            labels.readFromFile(config.getLabelsLocation(), config.getPrimaryLabelName());
         } catch (ParseException e) {
             logger.info(e.toString());
         }
@@ -187,6 +187,10 @@ public class AnnotationController {
                 CoNLLNerReader.TaToConll(Collections.singletonList(taToSave), outpath);
             }
 
+            // Save new classes
+            logger.info("Saving new classes " + labels.getNewLabels());
+            labels.writeToFile(config.getLabelsLocation());
+
         }
         // nothing happens to this...
         return "redirect:/";
@@ -293,8 +297,48 @@ public class AnnotationController {
         model.addAttribute("secondaryLabels", labels.getSecondaryLabelNames());
         model.addAttribute("primaryLabelName", config.getPrimaryLabelName());
         model.addAttribute("labelPositions", config.getLabelPositions());
+        logger.info("NEW labels " + labels.getNewLabels().toString());
+        model.addAttribute("newLabels", labels.getNewLabels());
 
         return "annotation";
+    }
+
+    /**
+     * This should never get label O
+     *
+     * @param labelValue
+     * @param labelType
+     * @param hs
+     * @param model
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = "/addlabel", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void addlabel(@RequestParam(value = "labelValue") String labelValue,
+                         @RequestParam(value = "labelType") String labelType, HttpSession hs,
+                         Model model) throws Exception {
+        logger.info("Adding new label " + labelValue + " " + labelType);
+        labels.addLabel(labelValue, labelType);
+    }
+
+    /**
+     * This should never get label O
+     *
+     * @param labelValue
+     * @param labelType
+     * @param hs
+     * @param model
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = "/removelabel", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void removelabel(@RequestParam(value = "labelValue") String labelValue,
+                         @RequestParam(value = "labelType") String labelType, HttpSession hs,
+                         Model model) throws Exception {
+        logger.info("Removing new label " + labelValue + " " + labelType);
+        labels.removeLabel(labelValue, labelType);
     }
 
     /**
