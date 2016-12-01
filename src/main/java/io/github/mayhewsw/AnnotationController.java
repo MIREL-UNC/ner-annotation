@@ -5,6 +5,7 @@ import edu.illinois.cs.cogcomp.core.datastructures.ViewNames;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.Constituent;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.TextAnnotation;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.View;
+import edu.illinois.cs.cogcomp.core.io.IOUtils;
 import edu.illinois.cs.cogcomp.core.utilities.SerializationHelper;
 import edu.illinois.cs.cogcomp.core.utilities.StringUtils;
 import edu.illinois.cs.cogcomp.nlp.corpusreaders.CoNLLNerReader;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import sun.reflect.generics.tree.Tree;
 
 import javax.servlet.http.HttpSession;
 import java.io.File;
@@ -141,6 +143,19 @@ public class AnnotationController {
         return ret;
     }
 
+    /**
+     * Given a foldername (first field in folders.txt), this will get the path to that folder (second field
+     * in folders.txt) and will read the files in that folder.
+     *
+     * @param folder folder identifier
+     * @return
+     * @throws IOException
+     */
+    public String[] listFolder(String folder) throws IOException {
+        String[] files = new String[0];
+        files = IOUtils.ls(folder);
+        return files;
+    }
 
     /**
      * This is called when the user clicks on the language button on the homepage.
@@ -153,7 +168,7 @@ public class AnnotationController {
     @RequestMapping(value = "/loaddata", method = RequestMethod.GET)
     public String dummy(@RequestParam(value = "folder") String folder, HttpSession hs) throws IOException {
         String username = (String) hs.getAttribute("username");
-        TreeMap<String, TextAnnotation> tas = loadFolder(folder, username);
+        String[] tas = listFolder(folder);
         hs.setAttribute("tas", tas);
         hs.setAttribute("dataname", folder);
 

@@ -14,9 +14,8 @@
               <th>ID</th>
               <th>Text annotation</th>
           </tr>
-          <tr th:each="key : ${session.tas.keySet()}">
+          <tr th:each="key : ${session.tas}">
               <td th:text="${#strings.replace(#strings.abbreviate(key,50),'_', ' ')}"></td>
-              <td><a href="#" th:href="@{/annotation(taid=${key})}" th:text="${#strings.abbreviate(session.tas.get(key),200)}"></a></td>
           </tr>
       </table>
 
