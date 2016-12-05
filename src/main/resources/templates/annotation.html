@@ -26,12 +26,6 @@
       Labels</a>
   </div>
 
-  <div class="label-descriptions">
-    Labels:
-    <span th:each="label : ${labels.labels}" th:class="${label.value}" th:text="${label.key}"></span>
-
-  </div>
-
   <div id="new-labels" class="label-descriptions">New labels to save (click to remove): </div>
 
   <div class="panel panel-default">
