@@ -64,22 +64,48 @@
   <div class="container-fluid">
     <div class="form-horizontal">
       <div class="form-group">
-        <label class="col-sm-4 control-label" for="primarylabel"
+        <label class="col-sm-3 control-label" for="primarylabel"
                th:text="${primaryLabelName}"></label>
-        <div class="col-sm-8">
-          <input type="text" id="primarylabel" class="typeahead-primary form-control"
-                 placeholder="Select a class" data-provide="typeahead" autocomplete="off"/>
+        <div class="col-sm-9">
+          <div class="input-group">
+            <input type="text" id="primarylabel" class="typeahead-primary form-control"
+                   placeholder="Select a class" data-provide="typeahead" autocomplete="off"/>
+            <div class="input-group-btn">
+              <button type="button" class="btn btn-default" aria-label="Get description"
+                      th:id="'showInfo-' + ${primaryLabelName}" th:value="${primaryLabelName}"
+                      data-toggle="collapse" data-target="#collapseExample">
+                <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div th:each="label,labelIndex : ${secondaryLabels}" class="form-group">
-        <label class="col-sm-4 control-label"
+        <label class="col-sm-3 control-label"
                th:text="${label}"></label>
-        <div class="col-sm-8">
-          <input type="text" th:id="'labelInput-' + ${labelIndex.index}" th:class="'form-control typeahead-' + ${labelIndex.index}"
-                 placeholder="Select a class" autocomplete="off"/>
+        <div class="col-sm-9">
+          <div class="input-group">
+            <input type="text" th:id="'labelInput-' + ${labelIndex.index}"
+                   th:class="'form-control typeahead-' + ${labelIndex.index}"
+                   placeholder="Select a class" autocomplete="off"/>
+            <div class="input-group-btn">
+              <button type="button" class="btn btn-default" aria-label="Get description"
+                      th:id="'showInfo-' + ${labelIndex.index}" th:value="${label}"
+                      data-toggle="collapse" data-target="#collapseExample">
+                <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="form-group">
+      <div class="collapse" id="collapseExample">
+        <div class="panel panel-default noborder">
+          <div class="panel-body" id="labelInfo">
+            Loading...
+          </div>
+        </div>
+      </div>
+      <div class="form-group tooltip-buttons">
         <button type="button" id="addClass" class="btn btn-default" value="add">Add Class</button>
         <button type="button" id="O" class="btn btn-default" value="O">No label</button>
       </div>

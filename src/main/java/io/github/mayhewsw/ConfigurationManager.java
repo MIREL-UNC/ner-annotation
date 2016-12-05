@@ -44,4 +44,8 @@ public class ConfigurationManager {
     public Object getLabelPositions() {
         return properties.get("labelPositions");
     }
+
+    public Object getLabelInfoQueryType() {
+        return properties.get("labelInfoQueryType");
+    }
 }

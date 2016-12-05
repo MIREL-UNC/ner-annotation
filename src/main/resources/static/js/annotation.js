@@ -159,7 +159,6 @@ $(document).ready(function() {
         // Add autocomplete for primary labels
         var possibleValues = Object.keys(primaryLabels).concat(
             newLabels.getNewLabelsByType(primaryLabelName));
-        console.log(possibleValues);
         addTypeaheadCompletion('primary', possibleValues, true,
                                label.getByName(primaryLabelName));
         // Add autocomplete for secondary labels
@@ -194,6 +193,32 @@ $(document).ready(function() {
         return label.toString();
     }
 
+    // Shows extra info about the selected label with labelName
+    function showInfo(labelName) {
+        // Delete old value
+        $('#labelInfo').html('Loading...');
+        // Read label from input
+        if (labelName == primaryLabelName) {
+            var inputValue = $('.typeahead-primary').val();
+        } else {
+            var inputIndex = secondaryLabelNames.indexOf(labelName);
+            var inputValue = $('.typeahead-' + inputIndex).val();
+        }
+        console.log(inputValue);
+        $.ajax({
+            method: "GET",
+            url: "/infoquery/description",
+            data: {labelValue: inputValue, labelName: labelName},
+            success: function(response) {
+                console.log(response);
+                $('#labelInfo').html(response);
+                $('.collapse').collapse('show');
+            }
+        }).done(function (msg) {
+            console.log("Information retrieved");
+        });
+    }
+
     // Add popover listener to elements.
     $('[id^=tok]').popover({
         placement: 'bottom',
@@ -215,7 +240,6 @@ $(document).ready(function() {
 
     $('#removebutton').click(function() {
         $.each($('[id^=tok]'), function(i, v) {
-            console.log(v);
             removelabel(v.id);
         });
     });
@@ -230,20 +254,23 @@ $(document).ready(function() {
     });
 
     // Listener for clicks in the container element.
-    // Used by the two buttons in the tooltip.
+    // Used by the buttons in the tooltip.
     $('.container').on('click', 'button', function() {
-        var buttonvalue = $(this)[0].value;
-        var spanid = $(this).parents('[id^=tok]')[0].id;
-        $('#' + spanid).popover('hide');
+        var buttonId = $(this)[0].id;
+        var spanId = $(this).parents('[id^=tok]')[0].id;
 
-        if (buttonvalue == 'O') {
-            removelabel(spanid);
-        } else {
+        if (buttonId == 'O') {
+            removelabel(spanId);
+            $('#' + spanId).popover('hide');
+        } else if (buttonId == 'addClass') {
             // Get the value from inputs
             var label = getLabelFromInputs(true);
             if (label !== '') {
-                addlabel(spanid, label);
+                addlabel(spanId, label);
             }
+            $('#' + spanId).popover('hide');
+        } else if (buttonId.indexOf('showInfo') != -1) {
+            showInfo($(this)[0].value);
         }
     });
 
@@ -417,10 +444,6 @@ $(document).ready(function() {
         var prev = '#tok-' + (tokid - 1);
         var next = '#tok-' + (tokid + 1);
 
-        // TODO: decide on logic for interior case.
-        //if(isOrg(prev) && isOrg(next)){
-        //    console.log("interior");
-        //} else
         if (isLabel(next, newclass)) {
             var cons = $(next).parent();
             $(next).before(" ");
