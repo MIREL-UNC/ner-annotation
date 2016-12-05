@@ -1,3 +1,9 @@
-
-<div th:text="${entity}" id="text"/>
-<div th:text="${infoString}" id="text"/>
+<div th:text="${errorString}" />
+<div>
+  <span>Entity:</span>
+  <div th:text="${entity}"/>
+</div>
+<div>
+  <span>Description:</span>
+  <div th:text="${infoString}"/>
+</div>

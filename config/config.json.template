@@ -8,5 +8,7 @@
         },
     },
     "labelFile": "data/example-labels.json",
-    "primaryLabelName": ""
+    "primaryLabelName": "",
+    "labelPositions": {},
+    "labelInfoQueryType": {}
 }
