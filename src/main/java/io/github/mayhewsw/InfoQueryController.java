@@ -32,13 +32,18 @@ public class InfoQueryController {
         config = new ConfigurationManager("config/config.json");
     }
 
-    private String getEntityDescription(String labelName) {
-        logger.info("Getting description " + labelName);
+    /**
+     * Returns the dbpedia description of the entity equivalent to Yago entityUri
+     * @param entityUri
+     * @return
+     */
+    private String getEntityDescription(String entityUri) {
+        logger.info("Getting description " + entityUri);
         String queryString = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                 "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                 "SELECT ?entity ?description ?title WHERE {\n" +
                 "     ?entity foaf:name ?title .\n" +
-                "     ?entity owl:sameAs <http://yago-knowledge.org/resource/" + labelName + "> .\n" +
+                "     ?entity owl:sameAs <http://yago-knowledge.org/resource/" + entityUri + "> .\n" +
                 "     ?entity <http://www.w3.org/2000/01/rdf-schema#comment> ?description .\n" +
                 "     FILTER (langMatches(lang(?description),\"en\"))\n" +
                 "} LIMIT 1";
@@ -52,8 +57,23 @@ public class InfoQueryController {
         return  description;
     }
 
-    private String getClassGloss(String labelName) {
+    /**
+     * Returns the YAGO gloss of className. Only YAGO types have glosses.
+     * @param className
+     * @return
+     */
+    private String getClassGloss(String className) {
+        logger.info("Getting description " + className);
         String gloss = "";
+        String queryString = "SELECT DISTINCT ?gloss WHERE { \n" +
+                "   <http://yago-knowledge.org/resource/" + className + "> <http://yago-knowledge.org/resource/hasGloss> ?gloss.\n" +
+                "} LIMIT 1";
+        Query query = QueryFactory.create(queryString);
+        ResultSet results = QueryExecutionFactory.sparqlService(YAGO_ENDPOINT, query).execSelect();
+        if (results.hasNext()) {
+            QuerySolution solution = results.next();
+            gloss = solution.getLiteral("?gloss").toString();
+        }
         return gloss;
     }
 
