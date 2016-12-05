@@ -12,7 +12,6 @@
       <table class="table table-hover">
           <tr>
               <th>ID</th>
-              <th>Text annotation</th>
           </tr>
           <tr th:each="key : ${session.fileList}">
               <td><a href="#" th:href="@{/annotation(taid=${key})}"
