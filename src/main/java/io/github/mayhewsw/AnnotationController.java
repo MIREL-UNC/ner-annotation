@@ -18,12 +18,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import sun.reflect.generics.tree.Tree;
 
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -65,86 +65,6 @@ public class AnnotationController {
 
     /**
      * Given a foldername (first field in folders.txt), this will get the path to that folder (second field
-     * in folders.txt) and will read all textannotations from that folder.
-     * <p>
-     * This returns a TreeMap from integer id to TextAnnotation. These ids are assigned only here -- they do
-     * not correspond to the internal TextAnnotation id.
-     *
-     * @param folder folder identifier
-     * @return
-     * @throws IOException
-     */
-    public TreeMap<String, TextAnnotation> loadFolder(String folder, String username) throws IOException {
-
-        JSONObject folderConfig = (JSONObject) config.getFolderProperties(folder);
-        String folderurl = folderConfig.get("location").toString();
-        String foldertype = folderConfig.get("format").toString();
-
-        File f = new File(folderurl);
-
-        // This will be ordered by it's keys.
-        TreeMap<String, TextAnnotation> ret = new TreeMap<>(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int retval;
-                try {
-                    retval = Integer.compare(Integer.parseInt(o1), Integer.parseInt(o2));
-                } catch (NumberFormatException e) {
-                    retval = o1.compareTo(o2);
-                }
-                return retval;
-            }
-        });
-
-        if (foldertype.equals(FOLDERTA)) {
-            String[] files = f.list();
-            int limit = Math.min(files.length, 300);
-            for (int i = 0; i < limit; i++) {
-                String file = files[i];
-                TextAnnotation ta = SerializationHelper.deserializeTextAnnotationFromFile(folderurl + "/" + file);
-                ret.put(file, ta);
-            }
-        } else if (foldertype.equals(FOLDERCONLL)) {
-            CoNLLNerReader cnl = new CoNLLNerReader(folderurl);
-            while (cnl.hasNext()) {
-                TextAnnotation ta = cnl.next();
-                logger.info("Loading: " + ta.getId());
-                ret.put(ta.getId(), ta);
-            }
-        }
-
-        // now check the annotation folder to see what this user has already annotated.
-        // if there is anything, load it here.
-        String outfolder = folderurl.replaceAll("/$", "") + "-annotation-" + username + "/";
-
-        logger.info("Now looking in user annotation folder: " + outfolder);
-
-        if ((new File(outfolder)).exists()) {
-
-            if (foldertype.equals(FOLDERTA)) {
-                File outf = new File(outfolder);
-                String[] files = outf.list();
-                int limit = Math.min(files.length, 300);
-                for (int i = 0; i < limit; i++) {
-                    String file = files[i];
-                    TextAnnotation ta = SerializationHelper.deserializeTextAnnotationFromFile(outfolder + "/" + file);
-                    ret.put(file, ta);
-                }
-            } else if (foldertype.equals(FOLDERCONLL)) {
-                CoNLLNerReader cnl = new CoNLLNerReader(outfolder);
-                while (cnl.hasNext()) {
-                    TextAnnotation ta = cnl.next();
-                    logger.info("Loading: " + ta.getId());
-                    ret.put(ta.getId(), ta);
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    /**
-     * Given a foldername (first field in folders.txt), this will get the path to that folder (second field
      * in folders.txt) and will read the files in that folder.
      *
      * @param folder folder identifier
@@ -152,8 +72,11 @@ public class AnnotationController {
      * @throws IOException
      */
     public String[] listFolder(String folder) throws IOException {
+        JSONObject folderConfig = (JSONObject) config.getFolderProperties(folder);
+        String folderurl = folderConfig.get("location").toString();
+
         String[] files = new String[0];
-        files = IOUtils.ls(folder);
+        files = IOUtils.ls(folderurl);
         return files;
     }
 
@@ -166,13 +89,12 @@ public class AnnotationController {
      * @throws IOException
      */
     @RequestMapping(value = "/loaddata", method = RequestMethod.GET)
-    public String dummy(@RequestParam(value = "folder") String folder, HttpSession hs) throws IOException {
-        String username = (String) hs.getAttribute("username");
-        String[] tas = listFolder(folder);
-        hs.setAttribute("tas", tas);
+    public String listDocuments(@RequestParam(value = "folder") String folder, HttpSession hs) throws IOException {
+        String[] fileList = listFolder(folder);
+        hs.setAttribute("fileList", fileList);
         hs.setAttribute("dataname", folder);
 
-        return "redirect:/annotation";
+        return "getstarted";
     }
 
     @RequestMapping(value = "/save", method = RequestMethod.GET)
@@ -192,8 +114,7 @@ public class AnnotationController {
             logger.info("Writing out to: " + outpath);
             logger.info("id is: " + taid);
 
-            TreeMap<String, TextAnnotation> tas = (TreeMap<String, TextAnnotation>) hs.getAttribute("tas");
-            TextAnnotation taToSave = tas.get(taid);
+            TextAnnotation taToSave = (TextAnnotation) hs.getAttribute("currentTextAnnotation");
             String savepath = outpath + taid;
 
             if (foldertype.equals(FOLDERTA)) {
@@ -225,7 +146,7 @@ public class AnnotationController {
         logger.info("Logging in!");
         hs.removeAttribute("username");
         hs.removeAttribute("dataname");
-        hs.removeAttribute("tas");
+        hs.removeAttribute("currentTextAnnotation");
 
         hs.setAttribute("username", user.getName());
         return "redirect:/";
@@ -236,43 +157,102 @@ public class AnnotationController {
         logger.info("Logging out...");
         hs.removeAttribute("username");
         hs.removeAttribute("dataname");
-        hs.removeAttribute("tas");
+        hs.removeAttribute("currentTextAnnotation");
         return "redirect:/";
+    }
+
+    public TextAnnotation readFile(String filepath, String foldertype) throws IOException {
+        TextAnnotation ta = null;
+        if (foldertype.equals(FOLDERCONLL)) {
+            CoNLLNerReader conllReader = new CoNLLNerReader(filepath);
+            if (!conllReader.hasNext()) {
+                logger.error("Error reading file " + filepath);
+                return ta;
+            }
+            ta = conllReader.next();
+        } else if (foldertype.equals(FOLDERTA)) {
+            ta = SerializationHelper.deserializeTextAnnotationFromFile(filepath);
+        }
+        return ta;
+    }
+
+    private String getAnnotationFolder(String folderurl, String username) {
+        if (folderurl != null && folderurl.length() > 0 && folderurl.charAt(folderurl.length()-1) == '/') {
+            folderurl = folderurl.substring(0, folderurl.length()-1);
+        }
+        return folderurl + "-annotation-" + username;
+    }
+
+    public TextAnnotation loadAnnotation(String foldername, String filename, String username) {
+        TextAnnotation textAnnotation = null;
+        JSONObject folderConfig = (JSONObject) config.getFolderProperties(foldername);
+        String folderurl = folderConfig.get("location").toString();
+        String foldertype = folderConfig.get("format").toString();
+        String filepath = Paths.get(getAnnotationFolder(folderurl, username), filename).toString();
+        // Check if an annotated file exists
+        logger.info("Checking user annotation file: " + filepath);
+
+        try {
+            if (!(new File(filepath)).exists()) {
+                // Read the original document
+                logger.info("Loading original file");
+                filepath = Paths.get(folderurl, filename).toString();
+            }
+            textAnnotation = readFile(filepath, foldertype);
+        } catch (IOException e) {
+            logger.error("Error loading file " + filepath);
+        }
+
+        return textAnnotation;
+    }
+
+    private void addPrevAndNext(HttpSession hs, Model model, String taid) {
+        List<String> filenames = Arrays.asList((String[]) hs.getAttribute("fileList"));
+        int currentIndex = filenames.indexOf(taid);
+        if (currentIndex == -1) {
+            logger.warn("Text annotation index " + taid + " not in registered filenames.");
+            return;
+        }
+        if (currentIndex != 0) {
+            model.addAttribute("previd", filenames.get(currentIndex - 1));
+        } else {
+            model.addAttribute("previd", -1);
+        }
+
+        if (currentIndex >= filenames.size() - 1) {
+            model.addAttribute("nextid", -1);
+        } else {
+            model.addAttribute("nextid", filenames.get(currentIndex + 1));
+        }
     }
 
     @RequestMapping(value = "/annotation", method = RequestMethod.GET)
     public String annotation(@RequestParam(value = "taid", required = false) String taid, HttpSession hs, Model model,
-                             RedirectAttributes redirectAttributes) {
-
-        TreeMap<String, TextAnnotation> tas = (TreeMap<String, TextAnnotation>) hs.getAttribute("tas");
-
-        // Go to the homepage.
-        if (tas == null) {
-            return "redirect:/";
-        }
+                             RedirectAttributes redirectAttributes) throws IOException {
 
         // If there's no taid, then return the getstarted page (not a redirect).
-        if (taid == null) {
+        if (taid == null || taid.equals("")) {
             return "getstarted";
         }
 
-        if (!tas.containsKey(taid)) {
-            return "redirect:/annotation";
+        String username = (String) hs.getAttribute("username");
+        TextAnnotation textAnnotation = loadAnnotation((String) hs.getAttribute("dataname"), taid, username);
+        hs.setAttribute("currentTextAnnotation", textAnnotation);
+        if (textAnnotation == null) {
+            return "getstarted";
         }
+        View ner = textAnnotation.getView(ViewNames.NER_CONLL);
 
-        TextAnnotation ta = tas.get(taid);
-        View ner = ta.getView(ViewNames.NER_CONLL);
-
-        model.addAttribute("ta", ta);
+        model.addAttribute("ta", textAnnotation);
         model.addAttribute("taid", taid);
 
         logger.info(String.format("Viewing TextAnnotation (id=%s)", taid));
-        logger.info("Text (trunc): " + ta.getTokenizedText().substring(
-                0, Math.min(20, ta.getTokenizedText().length())));
+        logger.info("Text (trunc): " + textAnnotation.getTokenizedText().substring(
+                0, Math.min(20, textAnnotation.getTokenizedText().length())));
         logger.info("Num Constituents: " + ner.getConstituents().size());
         logger.info("Constituents: " + ner.getConstituents());
 
-        String[] text = ta.getTokenizedText().split(" ");
+        String[] text = textAnnotation.getTokenizedText().split(" ");
 
         // add spans to every word that is not a constituent.
         for (int t = 0; t < text.length; t++) {
@@ -295,24 +275,12 @@ public class AnnotationController {
         String out = StringUtils.join(" ", text);
 
         model.addAttribute("htmlstring", out);
-
-        if (!tas.firstKey().equals(taid)) {
-            model.addAttribute("previd", tas.lowerKey(taid));
-        } else {
-            model.addAttribute("previd", -1);
-        }
-
-        if (!tas.lastKey().equals(taid)) {
-            model.addAttribute("nextid", tas.higherKey(taid));
-        } else {
-            model.addAttribute("nextid", -1);
-        }
+        addPrevAndNext(hs, model, taid);
 
         model.addAttribute("labels", labels.toHashMap());
         model.addAttribute("secondaryLabels", labels.getSecondaryLabelNames());
         model.addAttribute("primaryLabelName", config.getPrimaryLabelName());
         model.addAttribute("labelPositions", config.getLabelPositions());
-        logger.info("NEW labels " + labels.getNewLabels().toString());
         model.addAttribute("newLabels", labels.getNewLabels());
 
         return "annotation";
@@ -378,9 +346,7 @@ public class AnnotationController {
         String[] ss = spanid.split("-");
         Pair<Integer, Integer> span = new Pair<>(Integer.parseInt(ss[1]), Integer.parseInt(ss[2]));
 
-        TreeMap<String, TextAnnotation> tas = (TreeMap<String, TextAnnotation>) hs.getAttribute("tas");
-
-        TextAnnotation ta = tas.get(idstring);
+        TextAnnotation ta = (TextAnnotation) hs.getAttribute("currentTextAnnotation");
         String[] spantoks = ta.getTokensInSpan(span.getFirst(), span.getSecond());
 
         String text = StringUtils.join(" ", spantoks);
@@ -410,7 +376,8 @@ public class AnnotationController {
 
     @RequestMapping(value = "/removetoken", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void removetoken(@RequestParam(value = "tokid") String tokid, @RequestParam(value = "id") String idstring, HttpSession hs, Model model) throws Exception {
+    public void removetoken(@RequestParam(value = "tokid") String tokid, @RequestParam(value = "id") String idstring,
+                            HttpSession hs, Model model) throws Exception {
 
         logger.info(String.format("TextAnnotation with id %s: remove token (id:%s).", idstring, tokid));
 
@@ -418,9 +385,7 @@ public class AnnotationController {
         int inttokid = Integer.parseInt(ss[1]);
         Pair<Integer, Integer> tokspan = new Pair<>(inttokid, inttokid + 1);
 
-        TreeMap<String, TextAnnotation> tas = (TreeMap<String, TextAnnotation>) hs.getAttribute("tas");
-
-        TextAnnotation ta = tas.get(idstring);
+        TextAnnotation ta = (TextAnnotation) hs.getAttribute("currentTextAnnotation");
 
         String[] spantoks = ta.getTokensInSpan(tokspan.getFirst(), tokspan.getSecond());
         String text = StringUtils.join(" ", spantoks);
