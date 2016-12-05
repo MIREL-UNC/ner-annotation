@@ -21,7 +21,7 @@ import java.io.IOException;
 @RequestMapping(value = "/infoquery")
 public class InfoQueryController {
 
-    private static Logger logger = LoggerFactory.getLogger(AnnotationController.class);
+    private static Logger logger = LoggerFactory.getLogger(InfoQueryController.class);
     private final String URI_TYPE = "uri";
     private final String CLASS_TYPE = "class";
     private final String DBPEDIA_ENDPOINT = "http://dbpedia.org/sparql";
@@ -65,7 +65,7 @@ public class InfoQueryController {
         logger.info("Getting description of class " + className);
         String gloss = "";
         String queryString = "SELECT DISTINCT ?gloss WHERE { \n" +
-                "   <http://yago-knowledge.org/resource/" + className + "> <http://yago-knowledge.org/resource/hasGloss> ?gloss.\n" +
+                "  <http://yago-knowledge.org/resource/" + className + "> <http://yago-knowledge.org/resource/hasGloss> ?gloss.\n" +
                 "} LIMIT 1";
         Query query = QueryFactory.create(queryString);
         ResultSet results = QueryExecutionFactory.sparqlService(YAGO_ENDPOINT, query).execSelect();
@@ -85,7 +85,7 @@ public class InfoQueryController {
             labelType = ((JSONObject) config.getLabelInfoQueryType()).get(labelName).toString();
         } catch (NullPointerException e) {
             logger.warn("Error, unmapped label type " + labelName);
-            model.addAttribute("errorString", "Error, unmapped label type" + labelName);
+            model.addAttribute("errorString", "Error, unmapped label type " + labelName);
             return "info";
         }
         if (labelType.equals(URI_TYPE)) {
@@ -97,8 +97,11 @@ public class InfoQueryController {
             logger.warn("Error, unknown label type " + labelName);
         }
 
-        model.addAttribute("entity", labelValue);
-        model.addAttribute("infoString", description);
+        String url = "https://gate.d5.mpi-inf.mpg.de/webyago3spotlx/Browser?entity=%3C" + labelValue + "%3E";
+
+        model.addAttribute("name", labelValue);
+        model.addAttribute("url", url);
+        model.addAttribute("description", description);
         return "info";
     }
 }
