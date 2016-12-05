@@ -3,6 +3,7 @@ package io.github.mayhewsw;
 import edu.illinois.cs.cogcomp.core.datastructures.Pair;
 import edu.illinois.cs.cogcomp.core.datastructures.ViewNames;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.Constituent;
+import edu.illinois.cs.cogcomp.core.datastructures.textannotation.Sentence;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.TextAnnotation;
 import edu.illinois.cs.cogcomp.core.datastructures.textannotation.View;
 import edu.illinois.cs.cogcomp.core.io.IOUtils;
@@ -247,8 +248,6 @@ public class AnnotationController {
         model.addAttribute("taid", taid);
 
         logger.info(String.format("Viewing TextAnnotation (id=%s)", taid));
-        logger.info("Text (trunc): " + textAnnotation.getTokenizedText().substring(
-                0, Math.min(20, textAnnotation.getTokenizedText().length())));
         logger.info("Num Constituents: " + ner.getConstituents().size());
         logger.info("Constituents: " + ner.getConstituents());
 
@@ -270,6 +269,16 @@ public class AnnotationController {
                     "<span class='%s pointer cons %s' id='cons-%d-%d'>%s", c.getLabel(), labelClass,
                     start, end, text[start]);
             text[end - 1] += "</span>";
+        }
+
+        // Add line breaks to sentences
+        int currentIndex = -1;
+        for (Sentence sentence : textAnnotation.sentences()) {
+            currentIndex += sentence.size();
+            if (currentIndex >= text.length) {
+                break;
+            }
+            text[currentIndex] += "<br/>";
         }
 
         String out = StringUtils.join(" ", text);
