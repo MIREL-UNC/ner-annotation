@@ -38,11 +38,10 @@ public class InfoQueryController {
      * @return
      */
     private String getEntityDescription(String entityUri) {
-        logger.info("Getting description " + entityUri);
+        logger.info("Getting description of uri " + entityUri);
         String queryString = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                 "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
-                "SELECT ?entity ?description ?title WHERE {\n" +
-                "     ?entity foaf:name ?title .\n" +
+                "SELECT ?entity ?description WHERE {\n" +
                 "     ?entity owl:sameAs <http://yago-knowledge.org/resource/" + entityUri + "> .\n" +
                 "     ?entity <http://www.w3.org/2000/01/rdf-schema#comment> ?description .\n" +
                 "     FILTER (langMatches(lang(?description),\"en\"))\n" +
@@ -63,7 +62,7 @@ public class InfoQueryController {
      * @return
      */
     private String getClassGloss(String className) {
-        logger.info("Getting description " + className);
+        logger.info("Getting description of class " + className);
         String gloss = "";
         String queryString = "SELECT DISTINCT ?gloss WHERE { \n" +
                 "   <http://yago-knowledge.org/resource/" + className + "> <http://yago-knowledge.org/resource/hasGloss> ?gloss.\n" +
