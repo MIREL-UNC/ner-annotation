@@ -526,15 +526,13 @@ $(document).ready(function() {
             if (popover.length == 1) {
                 var span = popover.find('[id^=tok]')[0];
                 var label = getLabelFromInputs(true);
-                console.log(span);
-                console.log(label);
                 if (span && label !== '') {
                     addlabel(span.id, label);
                 }
                 popover.popover('hide');
             }
         } else if (event.keyCode == 27) {  // Esc key
-            popover = $('.popover');
+            var popover = $('.popover');
             if (popover.length > 0) {
                 popover.popover('hide');
             }
