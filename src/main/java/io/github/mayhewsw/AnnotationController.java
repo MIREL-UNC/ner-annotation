@@ -104,7 +104,9 @@ public class AnnotationController {
         // write out to
         String username = (String) hs.getAttribute("username");
         String folder = (String) hs.getAttribute("dataname");
+	logger.info("DATANAME " + folder); 
         JSONObject folderConfig = (JSONObject) config.getFolderProperties(folder);
+	
         String folderpath = folderConfig.get("location").toString();
         String foldertype = folderConfig.get("format").toString();
 
