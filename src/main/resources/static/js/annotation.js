@@ -393,12 +393,12 @@ $(document).ready(function() {
 
 
     // fix the spanid of constituent span.
-    function fixspanid(parent){
+    function fixspanid(parent) {
         var kids = $(parent).children("span");
 
         // if no kids, then this is the span to be removed.
         var newspanid = $(parent).attr("id");
-        if(kids.length > 0) {
+        if (kids.length > 0) {
             var first = $(kids[0]);
             var last = $(kids[kids.length - 1]);
             var firstnum = getnum(first.attr("id"));
@@ -409,9 +409,9 @@ $(document).ready(function() {
         }
 
         // remove all spans with no children.
-        $("span.cons").each(function (){
+        $("span.cons").each(function() {
             var kids = $(this).children("span");
-            if(kids.length == 0){
+            if (kids.length == 0) {
                 $(this).remove();
             }
         });
@@ -518,4 +518,26 @@ $(document).ready(function() {
     }
     $('.saveclass').click(save);
     $('#savebutton').click(save);
+
+    // Adding listener for shortcuts
+    function doc_keyUp(event) {
+        if (event.altKey && event.keyCode == 65) {
+            var popover = $('.popover');
+            if (popover.length == 1) {
+                var span = popover.find('[id^=tok]')[0];
+                var label = getLabelFromInputs(true);
+                if (span && label !== '') {
+                    addlabel(span.id, label);
+                }
+                popover.popover('hide');
+            }
+        } else if (event.keyCode == 27) {  // Esc key
+            var popover = $('.popover');
+            if (popover.length > 0) {
+                popover.popover('hide');
+            }
+        }
+    }
+    // register the handler
+    document.addEventListener('keyup', doc_keyUp, false);
 });
