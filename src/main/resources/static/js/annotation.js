@@ -172,6 +172,28 @@ $(document).ready(function() {
 
     }
 
+    function addSpinnerListeners() {
+        // Listener for the spinners in the tooltip
+        $('.spinner .btn:first-of-type').on('click', function() {
+          var btn = $(this);
+          var input = btn.closest('.spinner').find('input');
+          if (input.attr('max') == undefined || parseInt(input.val()) < parseInt(input.attr('max'))) {    
+            input.val(parseInt(input.val(), 10) + 1);
+          } else {
+            btn.next("disabled", true);
+          }
+        });
+        $('.spinner .btn:last-of-type').on('click', function() {
+          var btn = $(this);
+          var input = btn.closest('.spinner').find('input');
+          if (input.attr('min') == undefined || parseInt(input.val()) > parseInt(input.attr('min'))) {    
+            input.val(parseInt(input.val(), 10) - 1);
+          } else {
+            btn.prev("disabled", true);
+          }
+        });
+    }
+
     // Returns the string representing the (compound) variable
     function getLabelFromInputs(addNew) {
         var addValue = function(selector, labelName, label) {
@@ -219,6 +241,16 @@ $(document).ready(function() {
         });
     }
 
+    // Get the number of words to tag with the current label. Reads it from
+    // the spinner. If the value is malformed, set to one.
+    function getWordsToTag() {
+        var value = parseInt($('#spanSize').val());
+        if (isNaN(value) || value < 0 || value == undefined) {
+            return 1;
+        }
+        return value;
+    }
+
     // Add popover listener to elements.
     $('[id^=tok]').popover({
         placement: 'bottom',
@@ -236,6 +268,7 @@ $(document).ready(function() {
     }).on('click', function() {
         $(this).popover('toggle');
         setTypeaheads($(this));
+        addSpinnerListeners();
     });
 
     $('#removebutton').click(function() {
@@ -247,10 +280,10 @@ $(document).ready(function() {
     // on right click, change label to nothing.
     $('[id^=tok]').contextmenu(function(event){
         event.preventDefault();
-        var spanid = event.currentTarget.id;
-        console.log('Right clicked on ' + spanid);
+        var spanId = event.currentTarget.id;
+        console.log('Right clicked on ' + spanId);
 
-        removelabel(spanid);
+        removelabel(spanId);
     });
 
     // Listener for clicks in the container element.
@@ -265,8 +298,12 @@ $(document).ready(function() {
         } else if (buttonId == 'addClass') {
             // Get the value from inputs
             var label = getLabelFromInputs(true);
+            var wordsToTag = getWordsToTag();
+            var start = getnum(spanId);
             if (label !== '') {
-                addlabel(spanId, label);
+                for (var i = start; i < start + wordsToTag; i++) {
+                    addlabel("tok-" + i, label);
+                }
             }
             $('#' + spanId).popover('hide');
         } else if (buttonId.indexOf('showInfo') != -1) {
@@ -274,38 +311,24 @@ $(document).ready(function() {
         }
     });
 
-    // TODO (milit) Decide what to do whit this code. It closes the popover
-    // if you click in the body and it's not a button. But it consumes a lot of
-    // time doing the each function when the document is long.
-    // The problem: I don't know the behaviour when two popovers are open at the
-    // same time.
-    // $('body').on('click', function(e) {
-    //     $('[id^=tok]').each(function() {
-    //         //the 'is' for buttons that trigger popups
-    //         //the 'has' for icons within a button that triggers a popup
-    //         if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
-    //             $(this).popover('hide');
-    //         }
-    //     });
-
-    // });
-
     // given a span id (e.g. tok-4), return the integer
-    function getnum(spanid) {
-        return parseInt(spanid.split("-")[1]);
+    function getnum(spanId) {
+        console.log(spanId);
+        return parseInt(spanId.split("-")[1]);
     }
 
     // check if s is labeled...
     // this expects a string.
-    function isLabeled(spanid) {
-        if (spanid.charAt(0) != '#') {
-            spanid = '#' + spanid;
+    function isLabeled(spanId) {
+        if (spanId.charAt(0) != '#') {
+            spanId = '#' + spanId;
         }
-        var p = $(spanid).parent();
+        var p = $(spanId).parent();
         return p.hasClass('cons');
     }
 
-    // Returns the label of the spanElement or undefined, checking the first class of the parent
+    // Returns the label of the spanElement or undefined, checking the first
+    // class of the parent
     function getLabel(spanElement) {
         if (isLabeled(spanElement[0].id)) {
             return spanElement.parent()[0].classList[0];
@@ -339,20 +362,20 @@ $(document).ready(function() {
     }
 
     // Given a span, remove the label.
-    function removelabel(spanid) {
-        if (!isLabeled(spanid)) {
+    function removelabel(spanId) {
+        if (!isLabeled(spanId)) {
             return;
         }
         $("#savebutton").html("<span class=\"glyphicon glyphicon-floppy-disk\" aria-hidden=\"true\"></span> Save");
         $("#savebutton").css({"border-color" : "#c00"});
 
-        console.log("Removing label from: " + spanid);
+        console.log("Removing label from: " + spanId);
 
-        var tokobj = $("#" + spanid);
+        var tokobj = $("#" + spanId);
         var parent = tokobj.parent();
         var origparentid = parent.id;
 
-        var tokid = getnum(spanid);
+        var tokid = getnum(spanId);
 
         // FIXME: needs to be aware of first and last token positions
         var prev = "#tok-" + (tokid - 1);
@@ -378,34 +401,34 @@ $(document).ready(function() {
             p.remove();
         }
 
-        fixspanid(parent);
+        fixspanId(parent);
 
         // think carefully about what to send to server.
         // we had a constituent, we remove a token on one end.
         $.ajax({
             method: "POST",
             url: "/removetoken",
-            data: {tokid: spanid, id: getParameterByName("taid")}
+            data: {tokid: spanId, id: getParameterByName("taid")}
         }).done(function (msg) {
             console.log("successful removal.");
         });
     }
 
 
-    // fix the spanid of constituent span.
-    function fixspanid(parent) {
+    // fix the spanId of constituent span.
+    function fixspanId(parent) {
         var kids = $(parent).children("span");
 
         // if no kids, then this is the span to be removed.
-        var newspanid = $(parent).attr("id");
+        var newspanId = $(parent).attr("id");
         if (kids.length > 0) {
             var first = $(kids[0]);
             var last = $(kids[kids.length - 1]);
             var firstnum = getnum(first.attr("id"));
             var lastnum = getnum(last.attr("id")) + 1;
 
-            newspanid = "cons-" + firstnum + "-" + lastnum;
-            $(parent).attr("id", newspanid);
+            newspanId = "cons-" + firstnum + "-" + lastnum;
+            $(parent).attr("id", newspanId);
         }
 
         // remove all spans with no children.
@@ -419,25 +442,25 @@ $(document).ready(function() {
         var hh = $(parent).html();
         $(parent).removeText();
 
-        return newspanid;
+        return newspanId;
     }
 
 
     // run this function when you click on a token.
-    function addlabel(spanid, newclass) {
-        console.log("Adding " + newclass + " to " + spanid);
+    function addlabel(spanId, newclass) {
+        console.log("Adding " + newclass + " to " + spanId);
 
         $('#savebutton').html('<span class="glyphicon glyphicon-floppy-disk" ' +
                               'aria-hidden="true"></span> Save');
         $('#savebutton').css({'border-color' : '#c00'});
 
-        var tokid = getnum(spanid);
+        var tokid = getnum(spanId);
 
-        var tokobj = $("#" + spanid);
+        var tokobj = $("#" + spanId);
 
         // remove label.
-        if (isLabeled(spanid)) {
-            removelabel(spanid);
+        if (isLabeled(spanId)) {
+            removelabel(spanId);
         }
 
         // FIXME: needs to be aware of first and last token positions
@@ -480,13 +503,13 @@ $(document).ready(function() {
         }
 
         // Now fix the label of the constituent span.
-        var newspanid = fixspanid(tokobj.parent());
+        var newspanId = fixspanId(tokobj.parent());
 
         $.ajax({
             method: 'POST',
             url: '/addtoken',
             data: {
-                label: newclass, spanid: newspanid,
+                label: newclass, spanId: newspanId,
                 id: getParameterByName('taid')
             }
         }).done(function(msg) {
@@ -525,8 +548,12 @@ $(document).ready(function() {
             if (popover.length == 1) {
                 var span = popover.find('[id^=tok]')[0];
                 var label = getLabelFromInputs(true);
-                if (span && label !== '') {
-                    addlabel(span.id, label);
+                var wordsToTag = getWordsToTag();
+                var start = getnum(span.id);
+                if (label !== '') {
+                    for (var i = start; i < start + wordsToTag; i++) {
+                        addlabel("tok-" + i, label);
+                    }
                 }
                 popover.popover('hide');
             }
@@ -539,4 +566,5 @@ $(document).ready(function() {
     }
     // register the handler
     document.addEventListener('keyup', doc_keyUp, false);
+
 });
