@@ -18,12 +18,58 @@
     </h1>
   </div>
 
-  <div class="form-group">
-    <a id="savebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-floppy-disk"
-                                                                   aria-hidden="true"></span> Save</a>
-    <a id="removebutton" class="btn btn-default" role="button"><span class="glyphicon glyphicon-remove"
-                                                                     aria-hidden="true"></span> Remove All
-      Labels</a>
+  <div>
+    <div class="form-group">
+      <a id="savebutton" class="btn btn-default" role="button">
+        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span> Save
+      </a>
+      <a id="removebutton" class="btn btn-default" role="button">
+        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Remove All Labels
+      </a>
+
+      <button class="btn btn-default" type="button" data-toggle="modal" data-target="#myModal">
+        See shortcuts
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="shortcuts">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="shortcuts">Shortcuts</h4>
+        </div>
+        <div class="modal-body">
+          <table class="table">
+            <tbody>
+              <tr>
+                <td colspan = "2"><b>With tooltip closed</b></td>
+              </tr>
+              <tr>
+                <td>Right click on word</td>
+                <td>Remove all labels</td>
+              </tr>
+              <tr>
+                <td colspan = "2"><b>With tooltip opened</b></td>
+              </tr>
+              <tr>
+                <td>Atl + A</td><td>Save all labels</td>
+              </tr>
+              <tr>
+                <td>Esc</td><td>Close tooltip</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="new-labels" class="label-descriptions">New labels to save (click to remove): </div>
