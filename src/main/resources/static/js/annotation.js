@@ -301,7 +301,7 @@ $(document).ready(function() {
             var wordsToTag = getWordsToTag();
             var start = getnum(spanId);
             if (label !== '') {
-                for (var i = start; i < start + wordsToTag; i++) {
+                for (var i = start; i <= start + wordsToTag; i++) {
                     addlabel("tok-" + i, label);
                 }
             }
@@ -504,12 +504,12 @@ $(document).ready(function() {
 
         // Now fix the label of the constituent span.
         var newspanId = fixspanId(tokobj.parent());
-
+        console.log('new span id' + newspanId);
         $.ajax({
             method: 'POST',
             url: '/addtoken',
             data: {
-                label: newclass, spanId: newspanId,
+                label: newclass, spanid: newspanId,
                 id: getParameterByName('taid')
             }
         }).done(function(msg) {
