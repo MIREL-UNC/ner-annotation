@@ -158,6 +158,7 @@ public class InfoQueryController {
                 params.add(new BasicNameValuePair("q", lkifClass));
                 params.add(new BasicNameValuePair("type", "code"));
                 url = "https://github.com/RinkeHoekstra/lkif-core/search?" + URLEncodedUtils.format(params, ENCODING);
+		description = "Click to search in LKIF repository";
             }
         } else {
             logger.warn("Error, unknown label type " + labelName);
