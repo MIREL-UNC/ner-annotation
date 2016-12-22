@@ -136,7 +136,7 @@ $(document).ready(function() {
         var input = $('.typeahead-' + labelIndex);
         input.typeahead({
             source: possibleValues, autoselect: false,
-            minLength: 0, showHintOnFocus: 'all'
+            minLength: 2, showHintOnFocus: 'all'
         });
         if (focus === true) {
             input.focus();
@@ -512,7 +512,6 @@ $(document).ready(function() {
             // Delete the new keys
             rawNewLabels = {};
             $('#new-labels a').remove();
-            newLabels = new NewLabelSet('new-labels');
         });
 
     }
