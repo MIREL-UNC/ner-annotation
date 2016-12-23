@@ -408,7 +408,13 @@ $(document).ready(function() {
         $.ajax({
             method: "POST",
             url: "/removetoken",
-            data: {tokid: spanId, id: getParameterByName("taid")}
+            data: {tokid: spanId, id: getParameterByName("taid")},
+            error: function (request, status, error) {
+                var errorMsg = "An error has occurred while deleting a label! \n" + error + "\n Please try to " +
+                    "to save. If this doesn't work, reload the page. Sorry, but your progress may have " +
+                    "been lost. Please contact the admin as soon as possible for diagnosis.";
+                alert(errorMsg);
+            }
         }).done(function (msg) {
             console.log("successful removal.");
         });
@@ -511,6 +517,12 @@ $(document).ready(function() {
             data: {
                 label: newclass, spanid: newspanId,
                 id: getParameterByName('taid')
+            },
+            error: function (request, status, error) {
+                var errorMsg = "An error has occurred! \n" + error + "\n Please try to delete the last label added " +
+                    "and then try to save. If this doesn't work, reload the page. Sorry, but your progress may have " +
+                    "been lost. Please contact the admin as soon as possible for diagnosis.";
+                alert(errorMsg);
             }
         }).done(function(msg) {
             console.log('successful label add.');
@@ -527,6 +539,12 @@ $(document).ready(function() {
             beforeSend: function() {
                 // setting a timeout
                 $("#savebutton").html("<span class=\"fa fa-spinner fa-spin\"></span> Saving...");
+            },
+            error: function (request, status, error) {
+                var errorMsg = "An error has occurred! \n" + error + "\n Please try to delete the last label added " +
+                    "and then try to save. If this doesn't work, reload the page. Sorry, but your progress may have " +
+                    "been lost. Please contact the admin as soon as possible for diagnosis.";
+                alert(errorMsg);
             }
         }).done(function() {
             console.log("finished saving!");
